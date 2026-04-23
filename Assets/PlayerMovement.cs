@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,22 +19,29 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D rb;
 
-    private float moveInput;
+    public float MoveInput;
+    public Vector2 Velocity => rb.linearVelocity;
+    private PlayerAnimation playerAnimatorScript;
+
     private bool jumpRequested;
 
-    private bool isGrounded;
+    public bool IsGrounded;
     private bool wasGrounded;
 
     private int jumpCount;
 
+    private bool canAttack = true;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        playerAnimatorScript = GetComponent<PlayerAnimation>();
     }
 
     void Update()
     {
         GetMovement();
+        GetAttack();
         CheckGrounded();
     }
 
@@ -44,12 +53,12 @@ public class PlayerMovement : MonoBehaviour
     void GetMovement()
     {
         // Horizontal input
-        moveInput = 0f;
+        MoveInput = 0f;
 
         if (Keyboard.current.aKey.isPressed)
-            moveInput = -1f;
+            MoveInput = -1f;
         else if (Keyboard.current.dKey.isPressed)
-            moveInput = 1f;
+            MoveInput = 1f;
 
         // Jump input (buffered)
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
@@ -60,25 +69,25 @@ public class PlayerMovement : MonoBehaviour
 
     void CheckGrounded()
     {
-        isGrounded = Physics2D.OverlapCircle(
+        IsGrounded = Physics2D.OverlapCircle(
             groundCheck.position,
             groundCheckRadius,
             groundLayer
         );
 
         // Reset jumps only when landing
-        if (!wasGrounded && isGrounded)
+        if (!wasGrounded && IsGrounded)
         {
             jumpCount = 0;
         }
 
-        wasGrounded = isGrounded;
+        wasGrounded = IsGrounded;
     }
 
     void ApplyPhysics()
     {
         // Horizontal movement
-        rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+        rb.linearVelocity = new Vector2(MoveInput * moveSpeed, rb.linearVelocity.y);
 
         // Jump logic
         if (jumpRequested && jumpCount < maxJumps)
@@ -91,6 +100,27 @@ public class PlayerMovement : MonoBehaviour
         }
 
         jumpRequested = false;
+    }
+
+    void GetAttack()
+    {
+        if (Mouse.current.leftButton.wasPressedThisFrame && canAttack)
+        {
+            string[] attacks = { "Attack1", "Attack2", "Attack3" };
+
+            string selected = attacks[Random.Range(0, attacks.Length)];
+
+            playerAnimatorScript.UpdateAttack(selected);
+
+            StartCoroutine(AttackCooldown());
+        }
+    }
+
+    IEnumerator AttackCooldown()
+    {
+        canAttack = false;
+        yield return new WaitForSeconds(0.3f);
+        canAttack = true;
     }
 
     void OnDrawGizmosSelected()

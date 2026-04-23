@@ -38,6 +38,8 @@ public class PlayerAnimation : MonoBehaviour
             spriteRenderer.flipX = true;
     }
 
+
+    //function called from player movement to set the trigger for the attack type aka Attack1, Attack2, Attack3
     public void UpdateAttack(string selected)
     {
         animator.SetTrigger(selected);
