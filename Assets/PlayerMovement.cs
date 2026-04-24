@@ -34,7 +34,7 @@ public class PlayerMovement : MonoBehaviour
     //dashing
     public float dashDistance = 6f;
     public float dashSpeed = 10f;
-    public float dashCooldown = 3f;
+    public float dashCooldown = 6f;
     private bool isDashing = false;
     private bool dashRequested;
     private float lastDashTime;
@@ -43,10 +43,22 @@ public class PlayerMovement : MonoBehaviour
     //attacking
     private bool canAttack = true;
 
-
+    public static PlayerMovement Instance { get; private set; }
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
+        // Optional: persist between scenes
+        DontDestroyOnLoad(gameObject);
+
+
         rb = GetComponent<Rigidbody2D>();
         playerAnimatorScript = GetComponent<PlayerAnimation>();
     }
@@ -187,5 +199,11 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
+    }
+
+    public void TakeDamage()
+    {
+        //need logic
+        playerAnimatorScript.UpdateHurt();
     }
 }

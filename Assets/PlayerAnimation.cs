@@ -51,4 +51,8 @@ public class PlayerAnimation : MonoBehaviour
     {
         animator.SetTrigger("Roll");
     }
+    public void UpdateHurt()
+    {
+        animator.SetTrigger("Hurt");
+    }
 }

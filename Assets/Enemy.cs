@@ -12,7 +12,7 @@ public class Enemy : MonoBehaviour
     [Header("Sight Range (when enemy notices player)")]
     public float sightRangeX = 7f;
     public float sightRangeY = 2f;
-    public float attackRangeX = 3f;
+    public float attackRangeX = 1.4f;
 
     [Header("Attack")]
     public float attackCooldown = 1.5f;
@@ -25,30 +25,25 @@ public class Enemy : MonoBehaviour
     private bool facingRight = false;
     private SpriteRenderer spriteRenderer;
 
-    public Transform hitboxPoint;
-    public Vector3 rightOffset;
-    public Vector3 leftOffset;
     public Rigidbody2D rb;
 
     [SerializeField] private LayerMask playerLayer;
     private Collider2D[] results = new Collider2D[4]; // reuse buffer
 
+    // Animation state
+    public int AnimState = 0;
+    private EnemyAnimation animScript;
+
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
-    }
-
-    void Start()
-    {
-        if (hitbox != null)
-            hitbox.SetActive(false);
-
-        UpdateHitboxPosition();
+        animScript = GetComponent<EnemyAnimation>();
     }
 
     void Update()
     {
+        float playerDirection = player.position.x >= transform.position.x ? 1f : -1f;
         float dx = Mathf.Abs(player.position.x - transform.position.x);
         float dy = Mathf.Abs(player.position.y - transform.position.y);
 
@@ -56,7 +51,12 @@ public class Enemy : MonoBehaviour
         bool inSight = PlayerInSight(dx, dy);
 
         if (!inSight)
+        {
+            AnimState = 0;
             return;
+        }
+
+        Flip(playerDirection);
 
         if (inAttackRange)
         {
@@ -67,7 +67,7 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            MoveTowardPlayer(dx);
+            MoveTowardPlayer(dx, playerDirection);
         }
     }
 
@@ -84,77 +84,33 @@ public class Enemy : MonoBehaviour
     // -------------------------
     // MOVE ONLY ON X AXIS
     // -------------------------
-    void MoveTowardPlayer(float dx)
+    void MoveTowardPlayer(float dx, float direction)
     {
-        float direction = player.position.x >= transform.position.x ? 1f : -1f;
-
-        // Flip sprite logic
-        if (direction > 0 && !facingRight)
-            Flip();
-        else if (direction < 0 && facingRight)
-            Flip();
 
         Vector2 newPosition = rb.position + new Vector2(direction * moveSpeed * Time.fixedDeltaTime, 0f);
         rb.MovePosition(newPosition);
+        AnimState = 2;
     }
 
-    void Flip()
+    void Flip(float direction)
     {
-        facingRight = !facingRight;
+        // Flip sprite logic
+        if (direction > 0 && !facingRight)
+            facingRight = true;
+        else if (direction < 0 && facingRight)
+            facingRight = false;
 
         spriteRenderer.flipX = facingRight;
-
-        UpdateHitboxPosition();
-    }
-
-    void UpdateHitboxPosition()
-    {
-        if (hitboxPoint == null) return;
-
-        hitboxPoint.localPosition = facingRight ? rightOffset : leftOffset;
     }
 
     void Attack()
     {
+        Debug.Log("Player hit (manual check)!");
+        Debug.Log(Time.time);
         lastAttackTime = Time.time;
-
-        StartCoroutine(AttackRoutine());
-    }
-
-    IEnumerator AttackRoutine()
-    {
-        if (hitbox != null)
-        {
-            UpdateHitboxPosition();
-            hitbox.SetActive(true);
-            Physics2D.SyncTransforms();
-            CheckHitboxNow();
-        }
-
-        yield return new WaitForSeconds(0.15f);
-
-        if (hitbox != null)
-            hitbox.SetActive(false);
-    }
-
-    void CheckHitboxNow()
-    {
-        Collider2D col = hitbox.GetComponent<Collider2D>();
-
-        ContactFilter2D filter = new ContactFilter2D();
-        filter.SetLayerMask(playerLayer);
-        filter.useTriggers = true;
-
-        int count = col.Overlap(filter, results);
-
-        for (int i = 0; i < count; i++)
-        {
-            Debug.Log("Player hit (manual check)!");
-            Debug.Log(Time.time);
-
-            // If you only want ONE hit per attack, stop here:
-            return;
-        }
+        AnimState = 0;
+        animScript.Attack();
+        PlayerMovement.Instance.TakeDamage();
     }
 
     void OnDrawGizmos()
