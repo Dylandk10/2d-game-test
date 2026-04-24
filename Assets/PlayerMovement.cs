@@ -5,32 +5,45 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
+    // movement constants
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float jumpForce = 12f;
 
+    //ground check
     [Header("Ground Check")]
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
+
+    // components
+    private Rigidbody2D rb;
+    private PlayerAnimation playerAnimatorScript;
+    public Vector2 Velocity => rb.linearVelocity;
+
+    //jumping
     [Header("Jump Settings")]
     public int maxJumps = 2;
-
-    private Rigidbody2D rb;
-
-    public float MoveInput;
-    public Vector2 Velocity => rb.linearVelocity;
-    private PlayerAnimation playerAnimatorScript;
-
     private bool jumpRequested;
-
     public bool IsGrounded;
     private bool wasGrounded;
-
     private int jumpCount;
+    public float MoveInput;
 
+    //dashing
+    public float dashDistance = 6f;
+    public float dashSpeed = 10f;
+    public float dashCooldown = 3f;
+    private bool isDashing = false;
+    private bool dashRequested;
+    private float lastDashTime;
+    private int facingDirection = 1;
+
+    //attacking
     private bool canAttack = true;
+
+
 
     void Awake()
     {
@@ -56,15 +69,56 @@ public class PlayerMovement : MonoBehaviour
         MoveInput = 0f;
 
         if (Keyboard.current.aKey.isPressed)
+        {
             MoveInput = -1f;
+            facingDirection = -1;
+        }
         else if (Keyboard.current.dKey.isPressed)
+        {
             MoveInput = 1f;
+            facingDirection = 1;
+        }
 
         // Jump input (buffered)
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             jumpRequested = true;
         }
+
+        // Dash input
+        if (Keyboard.current.leftShiftKey.wasPressedThisFrame)
+        {
+            dashRequested = true;
+        }
+    }
+
+    void HandleDash()
+    {
+        if ((dashRequested && Time.time >= lastDashTime + dashCooldown))
+        {
+            dashRequested = false;
+            lastDashTime = Time.time;
+
+            float direction = MoveInput != 0 ? MoveInput : facingDirection;
+            playerAnimatorScript.UpdateDash();
+
+            StartCoroutine(Dash(direction));
+        }
+    }
+
+    IEnumerator Dash(float direction)
+    {
+        isDashing = true;
+
+        float originalGravity = rb.gravityScale;
+        rb.gravityScale = 0f;
+
+        rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
+
+        yield return new WaitForSeconds(dashDistance / dashSpeed);
+
+        rb.gravityScale = originalGravity;
+        isDashing = false;
     }
 
     void CheckGrounded()
@@ -86,6 +140,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ApplyPhysics()
     {
+        if (isDashing) return;
         // Horizontal movement
         rb.linearVelocity = new Vector2(MoveInput * moveSpeed, rb.linearVelocity.y);
 
@@ -100,10 +155,12 @@ public class PlayerMovement : MonoBehaviour
         }
 
         jumpRequested = false;
+        HandleDash();
     }
 
     void GetAttack()
     {
+        if (isDashing) return;
         if (Mouse.current.leftButton.wasPressedThisFrame && canAttack)
         {
             string[] attacks = { "Attack1", "Attack2", "Attack3" };

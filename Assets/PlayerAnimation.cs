@@ -4,6 +4,8 @@ using UnityEngine;
 public class PlayerAnimation : MonoBehaviour
 {
     private static readonly int AnimStateHash = Animator.StringToHash("AnimState");
+
+    // components
     private Animator animator;
     private PlayerMovement movement;
     private SpriteRenderer spriteRenderer;
@@ -43,5 +45,10 @@ public class PlayerAnimation : MonoBehaviour
     public void UpdateAttack(string selected)
     {
         animator.SetTrigger(selected);
+    }
+
+    public void UpdateDash()
+    {
+        animator.SetTrigger("Roll");
     }
 }
