@@ -15,8 +15,8 @@ public class Enemy : MonoBehaviour
     public float attackRangeX = 1.4f;
 
     [Header("Attack")]
+    [SerializeField] float attackDelay = 0.4f;
     public float attackCooldown = 1.5f;
-
     private float lastAttackTime;
 
     [Header("Hitbox")]
@@ -103,13 +103,32 @@ public class Enemy : MonoBehaviour
         spriteRenderer.flipX = facingRight;
     }
 
+    bool isAttacking = false;
+
     void Attack()
     {
-        lastAttackTime = Time.time;
+        if (!isAttacking)
+            StartCoroutine(AttackRoutine());
+    }
+
+    IEnumerator AttackRoutine()
+    {
+        isAttacking = true;
+
+        // Start animation immediately
         AnimState = 0;
         animScript.Attack();
+
+        // Wait before actually hitting
+        yield return new WaitForSeconds(attackDelay);
+
         CombatManager.Instance.TryHitPlayer(10);
+
+        lastAttackTime = Time.time;
+
+        isAttacking = false;
     }
+
 
     void OnDrawGizmos()
     {

@@ -31,13 +31,8 @@ public class CombatManager : MonoBehaviour
 
         hitRegisteredThisSwing = true;
 
-        if (PlayerMovement.Instance.IsBlocking)
-        {
-            PlayerMovement.Instance.Block();
-            return;
-        }
-
         PlayerMovement.Instance.TakeDamage(damage);
+        hitRegisteredThisSwing = false;
     }
 
 }

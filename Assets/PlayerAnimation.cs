@@ -55,8 +55,4 @@ public class PlayerAnimation : MonoBehaviour
     {
         animator.SetTrigger("Hurt");
     }
-    public void UpdateBlock()
-    {
-        animator.SetTrigger("Block");
-    }
 }
