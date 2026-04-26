@@ -44,6 +44,8 @@ public class PlayerMovement : MonoBehaviour
     private bool canAttack = true;
 
     public static PlayerMovement Instance { get; private set; }
+    public bool IsBlocking { get; private set; }
+    private int health = 100;
 
     void Awake()
     {
@@ -102,7 +104,18 @@ public class PlayerMovement : MonoBehaviour
         {
             dashRequested = true;
         }
+
+        if (Mouse.current.rightButton.isPressed)
+        {
+            IsBlocking = true;
+            playerAnimatorScript.UpdateBlock();
+        }else
+        {
+            IsBlocking = false;
+        }
     }
+
+    //need to handle block logic;
 
     void HandleDash()
     {
@@ -200,10 +213,25 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
     }
-
-    public void TakeDamage()
+    public void SetBlock(bool value)
     {
-        //need logic
+        IsBlocking = value;
+    }
+
+    public void TakeDamage(int dmg)
+    {
+        Debug.Log("Player hit (manual check)!");
+        Debug.Log(Time.time);
+        health -= dmg;
+        Debug.Log("Player HP: " + health);
         playerAnimatorScript.UpdateHurt();
     }
+
+    public void Block()
+    {
+        Debug.Log("Player has blocked!!");
+        Debug.Log(Time.time);
+    }
+
+
 }

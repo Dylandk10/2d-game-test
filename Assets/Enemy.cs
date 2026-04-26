@@ -105,12 +105,10 @@ public class Enemy : MonoBehaviour
 
     void Attack()
     {
-        Debug.Log("Player hit (manual check)!");
-        Debug.Log(Time.time);
         lastAttackTime = Time.time;
         AnimState = 0;
         animScript.Attack();
-        PlayerMovement.Instance.TakeDamage();
+        CombatManager.Instance.TryHitPlayer(10);
     }
 
     void OnDrawGizmos()
