@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float jumpForce = 12f;
+    public Vector2 Velocity => Player.Instance.rb.linearVelocity;
 
     //ground check
     [Header("Ground Check")]
@@ -16,11 +17,6 @@ public class PlayerMovement : MonoBehaviour
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
-
-    // components
-    private Rigidbody2D rb;
-    private PlayerAnimation playerAnimatorScript;
-    public Vector2 Velocity => rb.linearVelocity;
 
     //jumping
     [Header("Jump Settings")]
@@ -43,26 +39,6 @@ public class PlayerMovement : MonoBehaviour
     //attacking
     private bool canAttack = true;
 
-    public static PlayerMovement Instance { get; private set; }
-    private int health = 100;
-
-    void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-
-        // Optional: persist between scenes
-        DontDestroyOnLoad(gameObject);
-
-
-        rb = GetComponent<Rigidbody2D>();
-        playerAnimatorScript = GetComponent<PlayerAnimation>();
-    }
 
     void Update()
     {
@@ -115,7 +91,7 @@ public class PlayerMovement : MonoBehaviour
             lastDashTime = Time.time;
 
             float direction = MoveInput != 0 ? MoveInput : facingDirection;
-            playerAnimatorScript.UpdateDash();
+            Player.Instance.playerAnimatorScript.UpdateDash();
 
             StartCoroutine(Dash(direction));
         }
@@ -125,14 +101,14 @@ public class PlayerMovement : MonoBehaviour
     {
         isDashing = true;
 
-        float originalGravity = rb.gravityScale;
-        rb.gravityScale = 0f;
+        float originalGravity = Player.Instance.rb.gravityScale;
+        Player.Instance.rb.gravityScale = 0f;
 
-        rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
+        Player.Instance.rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
 
         yield return new WaitForSeconds(dashDistance / dashSpeed);
 
-        rb.gravityScale = originalGravity;
+        Player.Instance.rb.gravityScale = originalGravity;
         isDashing = false;
     }
 
@@ -157,14 +133,14 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isDashing) return;
         // Horizontal movement
-        rb.linearVelocity = new Vector2(MoveInput * moveSpeed, rb.linearVelocity.y);
+        Player.Instance.rb.linearVelocity = new Vector2(MoveInput * moveSpeed, Player.Instance.rb.linearVelocity.y);
 
         // Jump logic
         if (jumpRequested && jumpCount < maxJumps)
         {
             // Reset vertical velocity for consistent jump height
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, 0f);
+            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, jumpForce);
 
             jumpCount++;
         }
@@ -182,7 +158,7 @@ public class PlayerMovement : MonoBehaviour
 
             string selected = attacks[Random.Range(0, attacks.Length)];
 
-            playerAnimatorScript.UpdateAttack(selected);
+            Player.Instance.playerAnimatorScript.UpdateAttack(selected);
 
             StartCoroutine(AttackCooldown());
         }
@@ -202,15 +178,6 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
-    }
-
-    public void TakeDamage(int dmg)
-    {
-        Debug.Log("Player hit (manual check)!");
-        Debug.Log(Time.time);
-        health -= dmg;
-        Debug.Log("Player HP: " + health);
-        playerAnimatorScript.UpdateHurt();
     }
 
 

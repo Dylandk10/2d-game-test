@@ -31,7 +31,7 @@ public class CombatManager : MonoBehaviour
 
         hitRegisteredThisSwing = true;
 
-        PlayerMovement.Instance.TakeDamage(damage);
+        Player.Instance.TakeDamage(damage);
         hitRegisteredThisSwing = false;
     }
 
