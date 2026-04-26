@@ -8,14 +8,15 @@ public class PlayerAnimation : MonoBehaviour
     // components
     private Animator animator;
     private PlayerMovement movement;
-    private SpriteRenderer spriteRenderer;
+
+    //members
+    private int facingDirection = 1;
 
 
     void Awake()
     {
         animator = GetComponent<Animator>();
         movement = GetComponent<PlayerMovement>();
-        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
     }
 
@@ -35,9 +36,10 @@ public class PlayerAnimation : MonoBehaviour
         animator.SetFloat("AirSpeedY", movement.Velocity.y);
 
         if (movement.MoveInput > 0)
-            spriteRenderer.flipX = false;
+            facingDirection = 1;
         else if (movement.MoveInput < 0)
-            spriteRenderer.flipX = true;
+            facingDirection = -1;
+        transform.localScale = new Vector3(facingDirection, 1f, 1f);
     }
 
 
@@ -55,4 +57,5 @@ public class PlayerAnimation : MonoBehaviour
     {
         animator.SetTrigger("Hurt");
     }
+
 }

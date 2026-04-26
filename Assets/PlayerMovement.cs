@@ -5,56 +5,84 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // movement constants
+    public enum PlayerState
+    {
+        Idle,
+        Move,
+        Jump,
+        Dash,
+        Attack
+    }
+
+    public PlayerState currentState;
+
     [Header("Movement")]
     public float moveSpeed = 5f;
-    public float jumpForce = 12f;
-    public Vector2 Velocity => Player.Instance.rb.linearVelocity;
 
-    //ground check
+    [Header("Jump")]
+    public float jumpForce = 12f;
+    private bool jumpRequested = false;
+
     [Header("Ground Check")]
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
-
-    //jumping
-    [Header("Jump Settings")]
-    public int maxJumps = 2;
-    private bool jumpRequested;
     public bool IsGrounded;
     private bool wasGrounded;
-    private int jumpCount;
-    public float MoveInput;
 
-    //dashing
+    [Header("Jump Settings")]
+    public int maxJumps = 2;
+    private int jumpCount;
+
+    [Header("Dash")]
     public float dashDistance = 6f;
     public float dashSpeed = 10f;
-    public float dashCooldown = 6f;
-    private bool isDashing = false;
-    private bool dashRequested;
+    public float dashCooldown = 15f;
+
     private float lastDashTime;
+    private bool dashRequested;
     private int facingDirection = 1;
 
-    //attacking
+    [Header("Attack")]
     private bool canAttack = true;
+    private bool canDealDamage = true;
 
+    [SerializeField] public Transform attackPoint;
+    [SerializeField] private Vector2 attackSize = new Vector2(1.5f, 1f);
+    [SerializeField] private LayerMask enemyLayer;
+
+    private HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
+
+    public float MoveInput;
+    public Vector2 Velocity => Player.Instance.rb.linearVelocity;
+
+    void Awake()
+    {
+        currentState = PlayerState.Idle;
+    }
 
     void Update()
     {
-        GetMovement();
-        GetAttack();
+        GetInput();
         CheckGrounded();
+        StateMachine();
+
+        if (currentState == PlayerState.Attack)
+            DealDamage();
     }
 
     void FixedUpdate()
     {
-        ApplyPhysics();
+        ApplyMovement();
     }
 
-    void GetMovement()
+    // ======================================================
+    // INPUT
+    // ======================================================
+
+    void GetInput()
     {
-        // Horizontal input
         MoveInput = 0f;
 
         if (Keyboard.current.aKey.isPressed)
@@ -68,49 +96,108 @@ public class PlayerMovement : MonoBehaviour
             facingDirection = 1;
         }
 
-        // Jump input (buffered)
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             jumpRequested = true;
         }
 
-        // Dash input
         if (Keyboard.current.leftShiftKey.wasPressedThisFrame)
         {
             dashRequested = true;
         }
     }
 
-    //need to handle block logic;
+    // ======================================================
+    // STATE MACHINE
+    // ======================================================
 
-    void HandleDash()
+    void StateMachine()
     {
-        if ((dashRequested && Time.time >= lastDashTime + dashCooldown))
+        switch (currentState)
         {
-            dashRequested = false;
-            lastDashTime = Time.time;
+            case PlayerState.Idle:
+                HandleIdle();
+                break;
 
-            float direction = MoveInput != 0 ? MoveInput : facingDirection;
-            Player.Instance.playerAnimatorScript.UpdateDash();
+            case PlayerState.Move:
+                HandleMove();
+                break;
 
-            StartCoroutine(Dash(direction));
+            case PlayerState.Jump:
+                HandleJump();
+                break;
+
+            case PlayerState.Dash:
+                HandleDashState();
+                break;
+
+            case PlayerState.Attack:
+                HandleAttackState();
+                break;
         }
     }
 
-    IEnumerator Dash(float direction)
+    void HandleIdle()
     {
-        isDashing = true;
+        if (Mathf.Abs(MoveInput) > 0.1f)
+            currentState = PlayerState.Move;
 
-        float originalGravity = Player.Instance.rb.gravityScale;
-        Player.Instance.rb.gravityScale = 0f;
+        if (dashRequested)
+            TryDash();
+        if (jumpRequested)
+            HandleJump();
 
-        Player.Instance.rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
-
-        yield return new WaitForSeconds(dashDistance / dashSpeed);
-
-        Player.Instance.rb.gravityScale = originalGravity;
-        isDashing = false;
+        if (Mouse.current.leftButton.wasPressedThisFrame && canAttack)
+            StartAttack();
     }
+
+    void HandleMove()
+    {
+        if (Mathf.Abs(MoveInput) < 0.1f)
+            currentState = PlayerState.Idle;
+
+        if (dashRequested)
+            TryDash();
+        if (jumpRequested)
+            HandleJump();
+
+        if (Mouse.current.leftButton.wasPressedThisFrame && canAttack)
+            StartAttack();
+    }
+
+    void HandleJump() 
+    {
+        // Jump logic
+        if (jumpRequested && jumpCount < maxJumps)
+        {
+            // Reset vertical velocity for consistent jump height
+            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, 0f);
+            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, jumpForce);
+
+            jumpCount++;
+        }
+        jumpRequested = false;
+    }
+    void HandleDashState() { }
+    void HandleAttackState() { }
+
+    // ======================================================
+    // MOVEMENT
+    // ======================================================
+
+    void ApplyMovement()
+    {
+        if (currentState == PlayerState.Dash ||
+            currentState == PlayerState.Attack)
+            return;
+
+        Player.Instance.rb.linearVelocity = new Vector2(
+            MoveInput * moveSpeed,
+            Player.Instance.rb.linearVelocity.y
+        );
+    }
+
+
 
     void CheckGrounded()
     {
@@ -124,52 +211,109 @@ public class PlayerMovement : MonoBehaviour
         if (!wasGrounded && IsGrounded)
         {
             jumpCount = 0;
+            currentState = PlayerState.Idle;
         }
 
         wasGrounded = IsGrounded;
     }
 
-    void ApplyPhysics()
+    // ======================================================
+    // DASH
+    // ======================================================
+
+    void TryDash()
     {
-        if (isDashing) return;
-        // Horizontal movement
-        Player.Instance.rb.linearVelocity = new Vector2(MoveInput * moveSpeed, Player.Instance.rb.linearVelocity.y);
-
-        // Jump logic
-        if (jumpRequested && jumpCount < maxJumps)
+        if (Time.time < lastDashTime + dashCooldown)
         {
-            // Reset vertical velocity for consistent jump height
-            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, 0f);
-            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, jumpForce);
-
-            jumpCount++;
+            // reset request otherwise constantly dash.
+            dashRequested = false;
+            return;
         }
 
-        jumpRequested = false;
-        HandleDash();
+        dashRequested = false;
+        lastDashTime = Time.time;
+
+        currentState = PlayerState.Dash;
+
+        float dir = MoveInput != 0 ? MoveInput : facingDirection;
+
+        Player.Instance.playerAnimatorScript.UpdateDash();
+        StartCoroutine(DashRoutine(dir));
     }
 
-    void GetAttack()
+    IEnumerator DashRoutine(float direction)
     {
-        if (isDashing) return;
-        if (Mouse.current.leftButton.wasPressedThisFrame && canAttack)
-        {
-            string[] attacks = { "Attack1", "Attack2", "Attack3" };
+        float originalGravity = Player.Instance.rb.gravityScale;
+        Player.Instance.rb.gravityScale = 0f;
 
-            string selected = attacks[Random.Range(0, attacks.Length)];
+        Player.Instance.rb.linearVelocity =
+            new Vector2(direction * dashSpeed, 0f);
 
-            Player.Instance.playerAnimatorScript.UpdateAttack(selected);
+        yield return new WaitForSeconds(dashDistance / dashSpeed);
 
-            StartCoroutine(AttackCooldown());
-        }
+        Player.Instance.rb.gravityScale = originalGravity;
+
+        currentState = PlayerState.Move;
     }
 
-    IEnumerator AttackCooldown()
+    // ======================================================
+    // ATTACK
+    // ======================================================
+
+    void StartAttack()
     {
+        currentState = PlayerState.Attack;
         canAttack = false;
-        yield return new WaitForSeconds(0.3f);
-        canAttack = true;
+
+        hitEnemies.Clear();
+
+        string[] attacks = { "Attack1", "Attack2", "Attack3" };
+        string selected = attacks[Random.Range(0, attacks.Length)];
+
+        Player.Instance.playerAnimatorScript.UpdateAttack(selected);
+
+        StartCoroutine(AttackRoutine());
     }
+
+    IEnumerator AttackRoutine()
+    {
+        canDealDamage = true;
+
+        yield return new WaitForSeconds(0.2f);
+        canDealDamage = false;
+
+        yield return new WaitForSeconds(0.1f);
+
+        canAttack = true;
+        currentState = PlayerState.Move;
+    }
+
+    void DealDamage()
+    {
+        if (!canDealDamage) return;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            attackPoint.position,
+            attackSize,
+            0f,
+            enemyLayer
+        );
+
+        foreach (var hit in hits)
+        {
+            Enemy enemy = hit.GetComponentInParent<Enemy>();
+
+            if (enemy != null && !hitEnemies.Contains(enemy))
+            {
+                hitEnemies.Add(enemy);
+                enemy.TakeDamage(Player.Instance.GetDamage());
+            }
+        }
+    }
+
+    // ======================================================
+    // DEBUG
+    // ======================================================
 
     void OnDrawGizmosSelected()
     {
@@ -178,7 +322,11 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
+
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(attackPoint.position, attackSize);
+        }
     }
-
-
 }

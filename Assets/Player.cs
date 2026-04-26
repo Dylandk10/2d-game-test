@@ -11,6 +11,9 @@ public class Player : MonoBehaviour
 
     //privates
     private int health = 100;
+    private int baseDamage = 50;
+    private int damageBoost = 0;
+
 
     private void Awake()
     {
@@ -43,10 +46,12 @@ public class Player : MonoBehaviour
 
     public void TakeDamage(int dmg)
     {
-        Debug.Log("Player hit (manual check)!");
-        Debug.Log(Time.time);
         health -= dmg;
-        Debug.Log("Player HP: " + health);
-        Player.Instance.playerAnimatorScript.UpdateHurt();
+        playerAnimatorScript.UpdateHurt();
+    }
+
+    public int GetDamage()
+    {
+        return damageBoost + baseDamage;
     }
 }
