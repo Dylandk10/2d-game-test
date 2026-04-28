@@ -27,36 +27,56 @@ public class Enemy : MonoBehaviour
     public float attackCooldown = 1.5f;
     private float lastAttackTime;
 
-    [Header("Hitbox")]
-    public GameObject hitbox;
-
     [Header("Death")]
     [SerializeField] private float deathDestroyDelay = 1.2f;
 
+    [Header("Patrol")]
+    public float patrolRange = 4f;
+    public float patrolSpeed = 1.5f;
+    public float idleTime = 2f;
+    public float patrolTime = 3f;
+    [Range(0f, 1f)] public float patrolChance = 0.6f;
+
+    [Header("Ground Check")]
+    public Transform groundCheck;
+    public float groundCheckDistance = 0.3f;
+    public LayerMask groundLayer;
+
+    [Header("Wall Check")]
+    public Transform wallCheck;
+    public float wallCheckDistance = 0.2f;
+
+    private Vector2 startPosition;
+    private float stateTimer;
+    private bool isPatrolling = false;
+    private float patrolDirection = -1f; // start facing left
+
+    private float currentMoveDirection = 0f;
+    private float currentMoveSpeed = 0f;
+
+    private int facingDirection = 1;
+
     private EnemyState currentState;
 
-    private bool facingRight = false;
     private bool isAttacking = false;
     private bool isDead = false;
 
-    private SpriteRenderer spriteRenderer;
     public Rigidbody2D rb;
-
-    private Collider2D[] results = new Collider2D[4];
-
-    public int AnimState = 0;
     private EnemyAnimation animScript;
 
     private int health = 100;
     private int damage = 10;
 
+    public int AnimState = 0;
+
     void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
         animScript = GetComponent<EnemyAnimation>();
 
         currentState = EnemyState.Idle;
+        startPosition = transform.position;
+        stateTimer = idleTime;
     }
 
     void Update()
@@ -72,17 +92,37 @@ public class Enemy : MonoBehaviour
         switch (currentState)
         {
             case EnemyState.Idle:
-                HandleIdle(inSight, inAttackRange);
+                if (isPatrolling)
+                    HandlePatrol(inSight, inAttackRange);
+                else
+                    HandleIdle(inSight, inAttackRange);
                 break;
 
             case EnemyState.Chase:
-                HandleChase(inSight, inAttackRange, dx);
+                HandleChase(inSight, inAttackRange);
                 break;
 
             case EnemyState.Attack:
                 HandleAttack(inSight, inAttackRange);
                 break;
         }
+    }
+
+    void FixedUpdate()
+    {
+        if (currentState == EnemyState.Dead) return;
+
+        if (currentMoveDirection != 0f)
+        {
+            Vector2 newPosition = rb.position + new Vector2(
+                currentMoveDirection * currentMoveSpeed * Time.fixedDeltaTime,
+                0f
+            );
+
+            rb.MovePosition(newPosition);
+        }
+
+        currentMoveDirection = 0f;
     }
 
     // -------------------------
@@ -93,22 +133,96 @@ public class Enemy : MonoBehaviour
     {
         AnimState = 0;
 
-        if (!inSight) return;
+        if (inSight)
+        {
+            currentState = inAttackRange ? EnemyState.Attack : EnemyState.Chase;
+            return;
+        }
 
-        if (inAttackRange)
-            currentState = EnemyState.Attack;
-        else
-            currentState = EnemyState.Chase;
+        stateTimer -= Time.deltaTime;
+
+        if (stateTimer <= 0)
+        {
+            if (Random.value < patrolChance)
+                StartPatrol();
+            else
+                stateTimer = idleTime;
+        }
     }
-
-    void HandleChase(bool inSight, bool inAttackRange, float dx)
+    void HandlePatrol(bool inSight, bool inAttackRange)
     {
         AnimState = 2;
 
+        if (inSight)
+        {
+            isPatrolling = false;
+            currentState = inAttackRange ? EnemyState.Attack : EnemyState.Chase;
+            return;
+        }
+
+        float distanceFromStart = transform.position.x - startPosition.x;
+
+        float desiredDirection = patrolDirection;
+        float buffer = 0.2f;
+
+        // -------------------------
+        // Boundary decision
+        // -------------------------
+        if (patrolDirection > 0 && distanceFromStart >= patrolRange - buffer)
+        {
+            desiredDirection = -1f;
+        }
+        else if (patrolDirection < 0 && distanceFromStart <= -patrolRange + buffer)
+        {
+            desiredDirection = 1f;
+        }
+
+        // -------------------------
+        // Movement validation
+        // -------------------------
+        if (CanMove(desiredDirection))
+        {
+            patrolDirection = desiredDirection;
+        }
+        else if (CanMove(-desiredDirection))
+        {
+            patrolDirection = -desiredDirection;
+        }
+        else
+        {
+            isPatrolling = false;
+            stateTimer = idleTime;
+            return;
+        }
+
+        Flip(patrolDirection);
+        Move(patrolDirection, patrolSpeed);
+
+        stateTimer -= Time.deltaTime;
+
+        if (stateTimer <= 0)
+        {
+            isPatrolling = false;
+            stateTimer = idleTime;
+        }
+    }
+
+    void HandleChase(bool inSight, bool inAttackRange)
+    {
         float direction = player.position.x >= transform.position.x ? 1f : -1f;
+        if (CanMove(direction))
+            AnimState = 2;
+        else
+            AnimState = 0;
+
+        if (!CanMove(direction))
+        {
+            Flip(direction);
+            return;
+        }
 
         Flip(direction);
-        MoveTowardPlayer(direction);
+        Move(direction, moveSpeed);
 
         if (!inSight)
         {
@@ -117,9 +231,7 @@ public class Enemy : MonoBehaviour
         }
 
         if (inAttackRange)
-        {
             currentState = EnemyState.Attack;
-        }
     }
 
     void HandleAttack(bool inSight, bool inAttackRange)
@@ -133,35 +245,74 @@ public class Enemy : MonoBehaviour
         }
 
         if (Time.time >= lastAttackTime + attackCooldown)
-        {
             Attack();
-        }
 
         if (!inSight)
-        {
             currentState = EnemyState.Idle;
-        }
+    }
+
+    void StartPatrol()
+    {
+        isPatrolling = true;
+        stateTimer = patrolTime;
+
+        patrolDirection = Random.value < 0.5f ? -1f : 1f;
+
+        if (!CanMove(patrolDirection))
+            patrolDirection *= -1f;
     }
 
     // -------------------------
     // MOVEMENT
     // -------------------------
 
-    void MoveTowardPlayer(float direction)
+    void Move(float direction, float speed)
     {
-        Vector2 newPosition = rb.position + new Vector2(direction * moveSpeed * Time.fixedDeltaTime, 0f);
-
-        rb.MovePosition(newPosition);
+        currentMoveDirection = direction;
+        currentMoveSpeed = speed;
     }
 
     void Flip(float direction)
     {
-        if (direction > 0 && !facingRight)
-            facingRight = true;
-        else if (direction < 0 && facingRight)
-            facingRight = false;
+        if (direction == 0) return;
 
-        spriteRenderer.flipX = facingRight;
+        facingDirection = (int)direction;
+        transform.localScale = new Vector3(facingDirection, 1f, 1f);
+    }
+
+    // -------------------------
+    // ENVIRONMENT CHECKS
+    // -------------------------
+
+    bool CanMove(float direction)
+    {
+        return !IsWallAhead(direction) && IsGroundAhead(direction);
+    }
+
+    bool IsWallAhead(float direction)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(
+            wallCheck.position,
+            Vector2.right * direction,
+            wallCheckDistance,
+            groundLayer
+        );
+
+        return hit.collider != null;
+    }
+
+    bool IsGroundAhead(float direction)
+    {
+        Vector2 origin = (Vector2)groundCheck.position + Vector2.right * direction * 0.05f;
+
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            Vector2.down,
+            groundCheckDistance,
+            groundLayer
+        );
+
+        return hit.collider != null;
     }
 
     // -------------------------
@@ -187,7 +338,6 @@ public class Enemy : MonoBehaviour
             CombatManager.Instance.TryHitPlayer(damage);
 
         lastAttackTime = Time.time;
-
         isAttacking = false;
     }
 
@@ -196,10 +346,6 @@ public class Enemy : MonoBehaviour
         float dx = Mathf.Abs(player.position.x - transform.position.x);
         return dx <= attackRangeX;
     }
-
-    // -------------------------
-    // SIGHT
-    // -------------------------
 
     bool PlayerInSight(float dx, float dy)
     {
@@ -217,12 +363,9 @@ public class Enemy : MonoBehaviour
         health -= damage;
 
         if (health <= 0)
-        {
             Die();
-        } else
-        {
-            animScript.UpdateHurt(); 
-        }
+        else
+            animScript.UpdateHurt();
     }
 
     private void Die()
@@ -231,13 +374,15 @@ public class Enemy : MonoBehaviour
 
         isDead = true;
         currentState = EnemyState.Dead;
+
         StopAllCoroutines();
         rb.linearVelocity = Vector2.zero;
         rb.bodyType = RigidbodyType2D.Static;
 
         GetComponent<Collider2D>().enabled = false;
+
         animScript.UpdateHurt();
-        animScript.Death(); 
+        animScript.Death();
 
         StartCoroutine(DestroyAfterDeath());
     }
@@ -246,20 +391,5 @@ public class Enemy : MonoBehaviour
     {
         yield return new WaitForSeconds(deathDestroyDelay);
         Destroy(gameObject);
-    }
-
-    // -------------------------
-    // DEBUG
-    // -------------------------
-
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(transform.position,
-            new Vector3(sightRangeX * 2f, sightRangeY * 2f, 0f));
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(transform.position,
-            new Vector3(attackRangeX * 2f, 1f, 0f));
     }
 }
