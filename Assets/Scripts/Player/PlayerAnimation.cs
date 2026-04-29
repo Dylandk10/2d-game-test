@@ -1,24 +1,22 @@
-using System.Collections.Generic;
 using UnityEngine;
+
 
 public class PlayerAnimation : MonoBehaviour
 {
     private static readonly int AnimStateHash = Animator.StringToHash("AnimState");
 
-    // components
-    private Animator animator;
-    private PlayerMovement movement;
-
     //members
     private int facingDirection = 1;
 
+    private PlayerMovement movement;
+    private Animator animator;
 
-    void Awake()
+    void Start() 
     {
-        animator = GetComponent<Animator>();
-        movement = GetComponent<PlayerMovement>();
-
+        movement = Player.Instance.playerMovement;
+        animator = Player.Instance.animator;
     }
+
 
     void Update()
     {
@@ -35,6 +33,7 @@ public class PlayerAnimation : MonoBehaviour
 
         animator.SetFloat("AirSpeedY", movement.Velocity.y);
 
+        //handle flip
         if (movement.MoveInput > 0)
             facingDirection = 1;
         else if (movement.MoveInput < 0)
@@ -73,6 +72,43 @@ public class PlayerAnimation : MonoBehaviour
 
         // SHOW DEATH MENU HERE
         UIGameManager.Instance.ShowDeathMenu();
+    }
+
+    public void DealDamageHalfWayThroughAnimation()
+    {
+        Player.Instance.DealDamage();
+        DisableDamage();
+    }
+
+    public void EnableDamage()
+    {
+        Player.Instance.playerMovement.SetCanDealDamage(true);
+    }
+
+    public void DisableDamage()
+    {
+        Player.Instance.playerMovement.SetCanDealDamage(false);
+    }
+
+    public void EndAttack()
+    {
+        if (Player.Instance.playerMovement.GetAttackRequest())
+        {
+            Player.Instance.playerMovement.SetAttackRequest(false);
+            Player.Instance.playerMovement.StartAttack(); // immediately chain next attack
+            return;
+        }
+        Player.Instance.playerMovement.EndAttack();
+    }
+
+    public void EndHurt()
+    {
+        movement.SetCanDealDamage(false);
+        movement.SetAttackRequest(false);   
+
+        movement.currentState = movement.IsGrounded
+            ? PlayerMovement.PlayerState.Idle
+            : PlayerMovement.PlayerState.Jump;
     }
 
 }

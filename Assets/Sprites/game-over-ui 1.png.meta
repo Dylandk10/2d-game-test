@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d8cde37621358a14ebec892e82d6ec85
+guid: 0ce58361bdac6e74b9d858aa9ad9c54c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4896707147557875713
-    second: BlackHeart_0
+      213: 312708558388537350
+    second: game-over-ui 1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: BlackHeart_0
+      name: game-over-ui 1_0
       rect:
         serializedVersion: 2
-        x: 3
-        y: 9
-        width: 26
-        height: 22
+        x: 25
+        y: 21
+        width: 546
+        height: 556
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: fff42bc0bc66b0cb0800000000000000
-      internalID: -4896707147557875713
+      spriteID: 60829fce6c6f65400800000000000000
+      internalID: 312708558388537350
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      BlackHeart_0: -4896707147557875713
+      game-over-ui 1_0: 312708558388537350
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

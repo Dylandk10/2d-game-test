@@ -11,7 +11,8 @@ public class PlayerMovement : MonoBehaviour
         Move,
         Jump,
         Dash,
-        Attack
+        Attack,
+        Hurt
     }
 
     public PlayerState currentState;
@@ -47,12 +48,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Attack")]
     private bool canAttack = true;
     private bool canDealDamage = true;
-
-    [SerializeField] public Transform attackPoint;
-    [SerializeField] private Vector2 attackSize = new Vector2(1.5f, 1f);
-    [SerializeField] private LayerMask enemyLayer;
-
-    private HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
+    private bool attackRequested = false;
 
     public float MoveInput;
     public Vector2 Velocity => Player.Instance.rb.linearVelocity;
@@ -67,9 +63,6 @@ public class PlayerMovement : MonoBehaviour
         GetInput();
         CheckGrounded();
         StateMachine();
-
-        if (currentState == PlayerState.Attack)
-            DealDamage();
     }
 
     void FixedUpdate()
@@ -83,7 +76,20 @@ public class PlayerMovement : MonoBehaviour
 
     void GetInput()
     {
+
+        if (Player.Instance.GetLives() <= 0)
+        {
+            return;
+        }
+
+        // don't block attack
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            attackRequested = true;
+        }
         MoveInput = 0f;
+
+
 
         if (Keyboard.current.aKey.isPressed)
         {
@@ -135,6 +141,9 @@ public class PlayerMovement : MonoBehaviour
                 HandleAttackState();
                 break;
         }
+
+        Debug.Log(canAttack);
+        
     }
 
     void HandleIdle()
@@ -146,23 +155,35 @@ public class PlayerMovement : MonoBehaviour
             TryDash();
         if (jumpRequested)
             HandleJump();
-
-        if (Mouse.current.leftButton.wasPressedThisFrame && canAttack)
+        if (attackRequested && canAttack)
+        {
+            attackRequested = false;
             StartAttack();
+        }
     }
 
     void HandleMove()
     {
-        if (Mathf.Abs(MoveInput) < 0.1f)
-            currentState = PlayerState.Idle;
+        if (attackRequested && canAttack)
+        {
+            attackRequested = false;
+            StartAttack();
+        }
 
         if (dashRequested)
+        {
             TryDash();
-        if (jumpRequested)
-            HandleJump();
+            return;
+        }
 
-        if (Mouse.current.leftButton.wasPressedThisFrame && canAttack)
-            StartAttack();
+        if (jumpRequested)
+        {
+            HandleJump();
+            return;
+        }
+
+        if (Mathf.Abs(MoveInput) < 0.1f)
+            currentState = PlayerState.Idle;
     }
 
     void HandleJump() 
@@ -181,8 +202,16 @@ public class PlayerMovement : MonoBehaviour
         }
         jumpRequested = false;
     }
-    void HandleDashState() { }
-    void HandleAttackState() { }
+    void HandleDashState() 
+    {
+        attackRequested = false;
+        jumpRequested = false;
+    }
+    void HandleAttackState()
+    {
+        jumpRequested = false;
+        dashRequested = false;
+    }
 
     // ======================================================
     // MOVEMENT
@@ -190,8 +219,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ApplyMovement()
     {
-        if (currentState == PlayerState.Dash ||
-            currentState == PlayerState.Attack)
+        if (currentState == PlayerState.Dash)
             return;
 
         Player.Instance.rb.linearVelocity = new Vector2(
@@ -214,7 +242,10 @@ public class PlayerMovement : MonoBehaviour
         if (!wasGrounded && IsGrounded)
         {
             jumpCount = 0;
-            currentState = PlayerState.Idle;
+            if (currentState != PlayerState.Attack && currentState != PlayerState.Hurt && currentState != PlayerState.Dash)
+            {
+                currentState = PlayerState.Idle;
+            }
         }
 
         wasGrounded = IsGrounded;
@@ -263,55 +294,43 @@ public class PlayerMovement : MonoBehaviour
     // ATTACK
     // ======================================================
 
-    void StartAttack()
+    public void StartAttack()
     {
         currentState = PlayerState.Attack;
         canAttack = false;
 
-        hitEnemies.Clear();
+        Player.Instance.ClearHitEnemies();
 
         string[] attacks = { "Attack1", "Attack2", "Attack3" };
         string selected = attacks[Random.Range(0, attacks.Length)];
 
         Player.Instance.playerAnimatorScript.UpdateAttack(selected);
-
-        StartCoroutine(AttackRoutine());
     }
 
-    IEnumerator AttackRoutine()
+    public void EndAttack()
     {
-        canDealDamage = true;
-
-        yield return new WaitForSeconds(0.2f);
-        canDealDamage = false;
-
-        yield return new WaitForSeconds(0.1f);
-
         canAttack = true;
         currentState = PlayerState.Move;
     }
 
-    void DealDamage()
+    public bool GetCanDealDamage()
     {
-        if (!canDealDamage) return;
+        return canDealDamage;
+    }
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(
-            attackPoint.position,
-            attackSize,
-            0f,
-            enemyLayer
-        );
+    public void SetCanDealDamage(bool canDeal)
+    {
+        canDealDamage = canDeal;
+    }
 
-        foreach (var hit in hits)
-        {
-            Enemy enemy = hit.GetComponentInParent<Enemy>();
+    public bool GetAttackRequest()
+    {
+        return attackRequested;
+    }
 
-            if (enemy != null && !hitEnemies.Contains(enemy))
-            {
-                hitEnemies.Add(enemy);
-                enemy.TakeDamage(Player.Instance.GetDamage());
-            }
-        }
+    public void SetAttackRequest(bool attack)
+    {
+        attackRequested = attack;
     }
 
     // ======================================================
@@ -324,12 +343,6 @@ public class PlayerMovement : MonoBehaviour
         {
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-        }
-
-        if (attackPoint != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireCube(attackPoint.position, attackSize);
         }
     }
 }

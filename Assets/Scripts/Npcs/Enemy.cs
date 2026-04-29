@@ -381,8 +381,7 @@ public class Enemy : MonoBehaviour
 
         GetComponent<Collider2D>().enabled = false;
 
-        animScript.UpdateHurt();
-        animScript.Death();
+        animScript.Death(true);
 
         StartCoroutine(DestroyAfterDeath());
     }

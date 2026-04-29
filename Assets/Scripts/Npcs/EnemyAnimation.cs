@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class EnemyAnimation : MonoBehaviour
@@ -5,6 +6,7 @@ public class EnemyAnimation : MonoBehaviour
     private static readonly int AnimStateHash = Animator.StringToHash("AnimState");
     private Animator animator;
     private Enemy enemyScript;
+    private bool isDead = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -30,13 +32,20 @@ public class EnemyAnimation : MonoBehaviour
         animator.SetTrigger("Attack");
     }
 
-    public void Death()
+    public void Death(bool didDie)
     {
-        animator.SetTrigger("Death");
+        isDead = didDie;
+        animator.SetTrigger("Hurt");
     }
 
     public void UpdateHurt()
     {
         animator.SetTrigger("Hurt");
+    }
+
+    public void OnLastFrameHurt()
+    {
+        if(isDead)
+            animator.SetTrigger("Death");
     }
 }
