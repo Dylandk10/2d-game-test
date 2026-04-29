@@ -10,8 +10,8 @@ public class Player : MonoBehaviour
 
 
     //privates
-    private int health = 100;
-    private readonly int maxhealth = 100;
+    private int lives = 6;
+    private readonly int maxLives = 6;
     private int baseDamage = 50;
     private int damageBoost = 0;
 
@@ -44,22 +44,45 @@ public class Player : MonoBehaviour
     {
         
     }
-
-    public void TakeDamage(int dmg)
+    public void TakeDamage()
     {
-        health -= dmg;
-        playerAnimatorScript.UpdateHurt();
+        lives--;
+
+        if (lives <= 0)
+        {
+            lives = 0;
+            Die();
+        }
+        else
+        {
+            playerAnimatorScript.UpdateHurt();
+        }
+    }
+
+    private void Die()
+    {
+        Debug.Log("Player died");
+
+        // Stop movement
+        rb.linearVelocity = Vector2.zero;
+        rb.simulated = false;
+
+        // Optional: disable this script or input handling
+        // enabled = false;
+
+        // Play death animation
+        playerAnimatorScript.PlayDeath();
     }
 
     public int GetDamage()
     {
         return damageBoost + baseDamage;
     }
-    public int GetHealth()
+    public int GetLives()
     {
-        return health;
+        return lives;
     }
-    public int GetMaxHealth() {
-        return maxhealth;
+    public int GetMaxLives() {
+        return maxLives;
     }
 }

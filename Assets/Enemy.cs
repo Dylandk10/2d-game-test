@@ -65,7 +65,6 @@ public class Enemy : MonoBehaviour
     private EnemyAnimation animScript;
 
     private int health = 100;
-    private int damage = 10;
 
     public int AnimState = 0;
 
@@ -336,7 +335,7 @@ public class Enemy : MonoBehaviour
         yield return new WaitForSeconds(attackDelay);
 
         if (CheckPlayerInAttackRange())
-            CombatManager.Instance.TryHitPlayer(damage);
+            CombatManager.Instance.TryHitPlayer();
 
         lastAttackTime = Time.time;
         isAttacking = false;

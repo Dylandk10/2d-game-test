@@ -63,4 +63,16 @@ public class PlayerAnimation : MonoBehaviour
         animator.SetTrigger("Jump");
     }
 
+    public void PlayDeath()
+    {
+        animator.SetTrigger("Death");
+    }
+    public void OnDeathAnimationFinished()
+    {
+        Time.timeScale = 0f;
+
+        // 👉 SHOW DEATH MENU HERE
+        // UIManager.Instance.ShowDeathMenu();
+    }
+
 }
