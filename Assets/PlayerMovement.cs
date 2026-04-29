@@ -173,7 +173,10 @@ public class PlayerMovement : MonoBehaviour
             // Reset vertical velocity for consistent jump height
             Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, 0f);
             Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, jumpForce);
-
+            if(jumpCount < 1)
+                Player.Instance.playerAnimatorScript.UpdateJump();
+            else
+                Player.Instance.playerAnimatorScript.UpdateDash();
             jumpCount++;
         }
         jumpRequested = false;

@@ -39,7 +39,7 @@ public class Enemy : MonoBehaviour
 
     [Header("Ground Check")]
     public Transform groundCheck;
-    public float groundCheckDistance = 0.3f;
+    public float groundCheckDistance = 0.2f;
     public LayerMask groundLayer;
 
     [Header("Wall Check")]
@@ -112,15 +112,10 @@ public class Enemy : MonoBehaviour
     {
         if (currentState == EnemyState.Dead) return;
 
-        if (currentMoveDirection != 0f)
-        {
-            Vector2 newPosition = rb.position + new Vector2(
-                currentMoveDirection * currentMoveSpeed * Time.fixedDeltaTime,
-                0f
-            );
-
-            rb.MovePosition(newPosition);
-        }
+        rb.linearVelocity = new Vector2(
+            currentMoveDirection * currentMoveSpeed,
+            rb.linearVelocity.y
+        );
 
         currentMoveDirection = 0f;
     }
@@ -149,10 +144,9 @@ public class Enemy : MonoBehaviour
                 stateTimer = idleTime;
         }
     }
+
     void HandlePatrol(bool inSight, bool inAttackRange)
     {
-        AnimState = 2;
-
         if (inSight)
         {
             isPatrolling = false;
@@ -160,47 +154,45 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        float distanceFromStart = transform.position.x - startPosition.x;
+        float dir = patrolDirection;
 
-        float desiredDirection = patrolDirection;
-        float buffer = 0.2f;
-
-        // -------------------------
-        // Boundary decision
-        // -------------------------
-        if (patrolDirection > 0 && distanceFromStart >= patrolRange - buffer)
-        {
-            desiredDirection = -1f;
-        }
-        else if (patrolDirection < 0 && distanceFromStart <= -patrolRange + buffer)
-        {
-            desiredDirection = 1f;
-        }
+        bool canForward = CanMove(dir);
+        bool canBackward = CanMove(-dir);
 
         // -------------------------
-        // Movement validation
+        // Both directions blocked
         // -------------------------
-        if (CanMove(desiredDirection))
+        if (!canForward && !canBackward)
         {
-            patrolDirection = desiredDirection;
-        }
-        else if (CanMove(-desiredDirection))
-        {
-            patrolDirection = -desiredDirection;
-        }
-        else
-        {
-            isPatrolling = false;
+            AnimState = 0;
             stateTimer = idleTime;
+            isPatrolling = false;
+            currentState = EnemyState.Idle;
             return;
         }
 
+        // -------------------------
+        // Try forward
+        // -------------------------
+        if (canForward)
+        {
+            patrolDirection = dir;
+        }
+        else if (canBackward)
+        {
+            patrolDirection = -dir;
+        }
+
+        // -------------------------
+        // Move
+        // -------------------------
+        AnimState = 2;
         Flip(patrolDirection);
         Move(patrolDirection, patrolSpeed);
 
         stateTimer -= Time.deltaTime;
 
-        if (stateTimer <= 0)
+        if (stateTimer <= 0f)
         {
             isPatrolling = false;
             stateTimer = idleTime;
@@ -291,14 +283,23 @@ public class Enemy : MonoBehaviour
 
     bool IsWallAhead(float direction)
     {
+        Vector2 origin = wallCheck.position;
+
         RaycastHit2D hit = Physics2D.Raycast(
-            wallCheck.position,
+            origin,
             Vector2.right * direction,
             wallCheckDistance,
             groundLayer
         );
 
-        return hit.collider != null;
+        // optional debug
+        Debug.DrawRay(origin, Vector2.right * direction * wallCheckDistance, Color.red);
+
+        if (hit.collider == null)
+            return false;
+
+        // small tolerance prevents edge jitter on composite colliders
+        return hit.distance <= wallCheckDistance;
     }
 
     bool IsGroundAhead(float direction)

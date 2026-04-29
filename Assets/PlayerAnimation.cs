@@ -58,4 +58,9 @@ public class PlayerAnimation : MonoBehaviour
         animator.SetTrigger("Hurt");
     }
 
+    public void UpdateJump()
+    {
+        animator.SetTrigger("Jump");
+    }
+
 }

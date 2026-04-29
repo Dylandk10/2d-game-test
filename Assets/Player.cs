@@ -11,6 +11,7 @@ public class Player : MonoBehaviour
 
     //privates
     private int health = 100;
+    private readonly int maxhealth = 100;
     private int baseDamage = 50;
     private int damageBoost = 0;
 
@@ -53,5 +54,12 @@ public class Player : MonoBehaviour
     public int GetDamage()
     {
         return damageBoost + baseDamage;
+    }
+    public int GetHealth()
+    {
+        return health;
+    }
+    public int GetMaxHealth() {
+        return maxhealth;
     }
 }
