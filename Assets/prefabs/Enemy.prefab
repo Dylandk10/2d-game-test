@@ -237,26 +237,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84188e530aec76b4c975615f19ce4faf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  stats: {fileID: 11400000, guid: 458d0cbbfd77605449ac01a9631b99d4, type: 2}
   player: {fileID: 6408445506286705373, guid: beec1d93b3abbad4cb4be239e00b1793, type: 3}
-  moveSpeed: 2
-  sightRangeX: 7
-  sightRangeY: 2
-  attackRangeX: 1.5
-  attackDelay: 0.4
-  attackCooldown: 1.5
-  deathDestroyDelay: 1.2
-  patrolRange: 4
-  patrolSpeed: 1.5
-  idleTime: 2
-  patrolTime: 3
-  patrolChance: 0.6
   groundCheck: {fileID: 1372592700856095227}
-  groundCheckDistance: 0.2
+  wallCheck: {fileID: 7844097500159652628}
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  wallCheck: {fileID: 7844097500159652628}
-  wallCheckDistance: 0.2
   rb: {fileID: 856897112627382557}
   AnimState: 0
 --- !u!114 &6089171592293388449

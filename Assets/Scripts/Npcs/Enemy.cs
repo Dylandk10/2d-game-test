@@ -11,60 +11,36 @@ public class Enemy : MonoBehaviour
         Dead
     }
 
+    [Header("Stats")]
+    public EnemyStats stats;
+
     [Header("Player")]
     public Transform player;
 
-    [Header("Movement")]
-    public float moveSpeed = 2f;
-
-    [Header("Sight Range")]
-    public float sightRangeX = 7f;
-    public float sightRangeY = 2f;
-    public float attackRangeX = 1.4f;
-
-    [Header("Attack")]
-    [SerializeField] float attackDelay = 0.4f;
-    public float attackCooldown = 1.5f;
-    private float lastAttackTime;
-
-    [Header("Death")]
-    [SerializeField] private float deathDestroyDelay = 1.2f;
-
-    [Header("Patrol")]
-    public float patrolRange = 4f;
-    public float patrolSpeed = 1.5f;
-    public float idleTime = 2f;
-    public float patrolTime = 3f;
-    [Range(0f, 1f)] public float patrolChance = 0.6f;
-
-    [Header("Ground Check")]
+    [Header("Checks")]
     public Transform groundCheck;
-    public float groundCheckDistance = 0.2f;
-    public LayerMask groundLayer;
-
-    [Header("Wall Check")]
     public Transform wallCheck;
-    public float wallCheckDistance = 0.2f;
+    public LayerMask groundLayer;
 
     private Vector2 startPosition;
     private float stateTimer;
     private bool isPatrolling = false;
-    private float patrolDirection = -1f; // start facing left
+    private float patrolDirection = -1f;
 
     private float currentMoveDirection = 0f;
     private float currentMoveSpeed = 0f;
 
     private int facingDirection = 1;
-
     private EnemyState currentState;
 
     private bool isAttacking = false;
     private bool isDead = false;
 
+    private float lastAttackTime;
+    private int health;
+
     public Rigidbody2D rb;
     private EnemyAnimation animScript;
-
-    private int health = 100;
 
     public int AnimState = 0;
 
@@ -73,20 +49,26 @@ public class Enemy : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animScript = GetComponent<EnemyAnimation>();
 
+        // Auto-find player if forget to assign not great with tag but will be a safe fall back
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
         currentState = EnemyState.Idle;
         startPosition = transform.position;
-        stateTimer = idleTime;
+
+        stateTimer = stats.idleTime;
+        health = stats.maxHealth;
     }
 
     void Update()
     {
-        if (currentState == EnemyState.Dead) return;
+        if (currentState == EnemyState.Dead || player == null) return;
 
         float dx = Mathf.Abs(player.position.x - transform.position.x);
         float dy = Mathf.Abs(player.position.y - transform.position.y);
 
         bool inSight = PlayerInSight(dx, dy);
-        bool inAttackRange = dx <= attackRangeX;
+        bool inAttackRange = dx <= stats.attackRangeX;
 
         switch (currentState)
         {
@@ -137,10 +119,10 @@ public class Enemy : MonoBehaviour
 
         if (stateTimer <= 0)
         {
-            if (Random.value < patrolChance)
+            if (Random.value < stats.patrolChance)
                 StartPatrol();
             else
-                stateTimer = idleTime;
+                stateTimer = stats.idleTime;
         }
     }
 
@@ -158,49 +140,37 @@ public class Enemy : MonoBehaviour
         bool canForward = CanMove(dir);
         bool canBackward = CanMove(-dir);
 
-        // -------------------------
-        // Both directions blocked
-        // -------------------------
         if (!canForward && !canBackward)
         {
             AnimState = 0;
-            stateTimer = idleTime;
+            stateTimer = stats.idleTime;
             isPatrolling = false;
             currentState = EnemyState.Idle;
             return;
         }
 
-        // -------------------------
-        // Try forward
-        // -------------------------
         if (canForward)
-        {
             patrolDirection = dir;
-        }
         else if (canBackward)
-        {
             patrolDirection = -dir;
-        }
 
-        // -------------------------
-        // Move
-        // -------------------------
         AnimState = 2;
         Flip(patrolDirection);
-        Move(patrolDirection, patrolSpeed);
+        Move(patrolDirection, stats.patrolSpeed);
 
         stateTimer -= Time.deltaTime;
 
         if (stateTimer <= 0f)
         {
             isPatrolling = false;
-            stateTimer = idleTime;
+            stateTimer = stats.idleTime;
         }
     }
 
     void HandleChase(bool inSight, bool inAttackRange)
     {
         float direction = player.position.x >= transform.position.x ? 1f : -1f;
+
         if (CanMove(direction))
             AnimState = 2;
         else
@@ -213,7 +183,7 @@ public class Enemy : MonoBehaviour
         }
 
         Flip(direction);
-        Move(direction, moveSpeed);
+        Move(direction, stats.moveSpeed);
 
         if (!inSight)
         {
@@ -235,7 +205,7 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        if (Time.time >= lastAttackTime + attackCooldown)
+        if (Time.time >= lastAttackTime + stats.attackCooldown)
             Attack();
 
         if (!inSight)
@@ -245,7 +215,7 @@ public class Enemy : MonoBehaviour
     void StartPatrol()
     {
         isPatrolling = true;
-        stateTimer = patrolTime;
+        stateTimer = stats.patrolTime;
 
         patrolDirection = Random.value < 0.5f ? -1f : 1f;
 
@@ -287,18 +257,13 @@ public class Enemy : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(
             origin,
             Vector2.right * direction,
-            wallCheckDistance,
+            stats.wallCheckDistance,
             groundLayer
         );
 
-        // optional debug
-        Debug.DrawRay(origin, Vector2.right * direction * wallCheckDistance, Color.red);
+        Debug.DrawRay(origin, Vector2.right * direction * stats.wallCheckDistance, Color.red);
 
-        if (hit.collider == null)
-            return false;
-
-        // small tolerance prevents edge jitter on composite colliders
-        return hit.distance <= wallCheckDistance;
+        return hit.collider != null && hit.distance <= stats.wallCheckDistance;
     }
 
     bool IsGroundAhead(float direction)
@@ -308,7 +273,7 @@ public class Enemy : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(
             origin,
             Vector2.down,
-            groundCheckDistance,
+            stats.groundCheckDistance,
             groundLayer
         );
 
@@ -332,7 +297,7 @@ public class Enemy : MonoBehaviour
         AnimState = 0;
         animScript.Attack();
 
-        yield return new WaitForSeconds(attackDelay);
+        yield return new WaitForSeconds(stats.attackDelay);
 
         if (CheckPlayerInAttackRange())
             CombatManager.Instance.TryHitPlayer();
@@ -344,12 +309,12 @@ public class Enemy : MonoBehaviour
     bool CheckPlayerInAttackRange()
     {
         float dx = Mathf.Abs(player.position.x - transform.position.x);
-        return dx <= attackRangeX;
+        return dx <= stats.attackRangeX;
     }
 
     bool PlayerInSight(float dx, float dy)
     {
-        return dx <= sightRangeX && dy <= sightRangeY;
+        return dx <= stats.sightRangeX && dy <= stats.sightRangeY;
     }
 
     // -------------------------
@@ -388,7 +353,7 @@ public class Enemy : MonoBehaviour
 
     IEnumerator DestroyAfterDeath()
     {
-        yield return new WaitForSeconds(deathDestroyDelay);
+        yield return new WaitForSeconds(stats.deathDestroyDelay);
         Destroy(gameObject);
     }
 }
