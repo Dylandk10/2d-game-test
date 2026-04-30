@@ -1,0 +1,65 @@
+# ========== Unity Generated Folders ==========
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+
+# ========== Memory Captures ==========
+MemoryCaptures/
+
+# ========== Asset Import Pipeline ==========
+Assets/AssetStoreTools*
+
+# ========== Visual Studio / Rider ==========
+.vs/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# ========== OS Files ==========
+.DS_Store
+Thumbs.db
+
+# ========== Unity Cache ==========
+*.cache
+*.ilk
+*.pdb
+*.mdb
+*.opendb
+
+# ========== Builds ==========
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
+*.ipa
+
+# ========== Addressables ==========
+ServerData/
+
+# ========== Burst / Shader Cache ==========
+*.burst
+*.shadercache
+
+# ========== Test Results ==========
+TestResults/
+
+# ========== Misc ==========
+sysinfo.txt
