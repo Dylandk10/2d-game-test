@@ -13,8 +13,8 @@ public class PlayerAnimation : MonoBehaviour
 
     void Start() 
     {
-        movement = Player.Instance.playerMovement;
-        animator = Player.Instance.animator;
+        movement = Player.Instance.GetPlayerMovement();
+        animator = Player.Instance.GetAnimator();
     }
 
 
@@ -82,23 +82,23 @@ public class PlayerAnimation : MonoBehaviour
 
     public void EnableDamage()
     {
-        Player.Instance.playerMovement.SetCanDealDamage(true);
+        movement.SetCanDealDamage(true);
     }
 
     public void DisableDamage()
     {
-        Player.Instance.playerMovement.SetCanDealDamage(false);
+        movement.SetCanDealDamage(false);
     }
 
     public void EndAttack()
     {
-        if (Player.Instance.playerMovement.GetAttackRequest())
+        if (movement.GetAttackRequest())
         {
-            Player.Instance.playerMovement.SetAttackRequest(false);
-            Player.Instance.playerMovement.StartAttack(); // immediately chain next attack
+            movement.SetAttackRequest(false);
+            movement.StartAttack(); // immediately chain next attack
             return;
         }
-        Player.Instance.playerMovement.EndAttack();
+        movement.EndAttack();
     }
 
     public void EndHurt()

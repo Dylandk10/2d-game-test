@@ -51,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
     private bool attackRequested = false;
 
     public float MoveInput;
-    public Vector2 Velocity => Player.Instance.rb.linearVelocity;
+    public Vector2 Velocity => Player.Instance.GetRigidbody2D().linearVelocity;
 
     void Awake()
     {
@@ -141,8 +141,6 @@ public class PlayerMovement : MonoBehaviour
                 HandleAttackState();
                 break;
         }
-
-        Debug.Log(canAttack);
         
     }
 
@@ -192,12 +190,12 @@ public class PlayerMovement : MonoBehaviour
         if (jumpRequested && jumpCount < maxJumps)
         {
             // Reset vertical velocity for consistent jump height
-            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, 0f);
-            Player.Instance.rb.linearVelocity = new Vector2(Player.Instance.rb.linearVelocity.x, jumpForce);
+            Player.Instance.GetRigidbody2D().linearVelocity = new Vector2(Player.Instance.GetRigidbody2D().linearVelocity.x, 0f);
+            Player.Instance.GetRigidbody2D().linearVelocity = new Vector2(Player.Instance.GetRigidbody2D().linearVelocity.x, jumpForce);
             if(jumpCount < 1)
-                Player.Instance.playerAnimatorScript.UpdateJump();
+                Player.Instance.GetPlayerAnimationScript().UpdateJump();
             else
-                Player.Instance.playerAnimatorScript.UpdateDash();
+                Player.Instance.GetPlayerAnimationScript().UpdateDash();
             jumpCount++;
         }
         jumpRequested = false;
@@ -222,9 +220,9 @@ public class PlayerMovement : MonoBehaviour
         if (currentState == PlayerState.Dash)
             return;
 
-        Player.Instance.rb.linearVelocity = new Vector2(
+        Player.Instance.GetRigidbody2D().linearVelocity = new Vector2(
             MoveInput * moveSpeed,
-            Player.Instance.rb.linearVelocity.y
+            Player.Instance.GetRigidbody2D().linearVelocity.y
         );
     }
 
@@ -271,21 +269,21 @@ public class PlayerMovement : MonoBehaviour
 
         float dir = MoveInput != 0 ? MoveInput : facingDirection;
 
-        Player.Instance.playerAnimatorScript.UpdateDash();
+        Player.Instance.GetPlayerAnimationScript().UpdateDash();
         StartCoroutine(DashRoutine(dir));
     }
 
     IEnumerator DashRoutine(float direction)
     {
-        float originalGravity = Player.Instance.rb.gravityScale;
-        Player.Instance.rb.gravityScale = 0f;
+        float originalGravity = Player.Instance.GetRigidbody2D().gravityScale;
+        Player.Instance.GetRigidbody2D().gravityScale = 0f;
 
-        Player.Instance.rb.linearVelocity =
+        Player.Instance.GetRigidbody2D().linearVelocity =
             new Vector2(direction * dashSpeed, 0f);
 
         yield return new WaitForSeconds(dashDistance / dashSpeed);
 
-        Player.Instance.rb.gravityScale = originalGravity;
+        Player.Instance.GetRigidbody2D().gravityScale = originalGravity;
 
         currentState = PlayerState.Move;
     }
@@ -304,7 +302,7 @@ public class PlayerMovement : MonoBehaviour
         string[] attacks = { "Attack1", "Attack2", "Attack3" };
         string selected = attacks[Random.Range(0, attacks.Length)];
 
-        Player.Instance.playerAnimatorScript.UpdateAttack(selected);
+        Player.Instance.GetPlayerAnimationScript().UpdateAttack(selected);
     }
 
     public void EndAttack()

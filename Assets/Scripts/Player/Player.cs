@@ -8,10 +8,10 @@ public class Player : MonoBehaviour
     public static Player Instance { get; private set; }
 
     //main components for subscripts
-    public Rigidbody2D rb;
-    public PlayerAnimation playerAnimatorScript;
-    public PlayerMovement playerMovement;
-    public Animator animator;
+    private Rigidbody2D rb;
+    private PlayerAnimation playerAnimatorScript;
+    private PlayerMovement playerMovement;
+    private Animator animator;
     private CapsuleCollider2D capsuleCollider;
     private SpriteRenderer spriteRenderer;
 
@@ -78,6 +78,9 @@ public class Player : MonoBehaviour
             Die();
         }
         playerMovement.EndAttack();
+
+        //keep camera effects off for now. Audio queues are going to be better
+        // CameraEffects.Instance.HitZoom();
         StartCoroutine(HitStop(0.2f));
         StartCoroutine(InvincibilityRoutine());
         playerAnimatorScript.UpdateHurt();
@@ -169,6 +172,26 @@ public class Player : MonoBehaviour
     }
     public int GetMaxLives() {
         return maxLives;
+    }
+
+    public Rigidbody2D GetRigidbody2D()
+    {
+        return rb;
+    }
+
+    public PlayerAnimation GetPlayerAnimationScript()
+    {
+        return playerAnimatorScript;
+    }
+
+    public PlayerMovement GetPlayerMovement()
+    {
+        return playerMovement;
+    }
+
+    public Animator GetAnimator()
+    {
+        return animator;
     }
 
     // debug
