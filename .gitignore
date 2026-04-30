@@ -63,3 +63,13 @@ TestResults/
 
 # ========== Misc ==========
 sysinfo.txt
+
+# ====== To ignore my original set up =================
+# IDE / solution
+*.sln
+*.slnx
+*.csproj
+.vsconfig
+
+# Unity UI Toolkit schema
+UIElementsSchema
