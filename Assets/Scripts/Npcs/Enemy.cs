@@ -72,7 +72,7 @@ public class Enemy : MonoBehaviour
         float dy = Mathf.Abs(player.position.y - transform.position.y);
 
         bool inSight = PlayerInSight(dx, dy);
-        bool inAttackRange = dx <= stats.attackRangeX;
+        bool inAttackRange = dx <= stats.attackRangeX && dy <= stats.attackRangeY;
 
         switch (currentState)
         {
@@ -296,7 +296,8 @@ public class Enemy : MonoBehaviour
     public bool CheckPlayerInAttackRange()
     {
         float dx = Mathf.Abs(player.position.x - transform.position.x);
-        return dx <= stats.attackRangeX;
+        float dy = Mathf.Abs(player.position.y - transform.position.y);
+        return dx <= stats.attackRangeX && dy <= stats.attackRangeY;
     }
 
     bool PlayerInSight(float dx, float dy)
@@ -382,5 +383,24 @@ public class Enemy : MonoBehaviour
     {
         yield return new WaitForSeconds(stats.deathDestroyDelay);
         Destroy(gameObject);
+    }
+
+    //debug
+
+    void OnDrawGizmosSelected()
+    {
+        if (stats == null) return;
+
+        Gizmos.color = Color.red;
+
+        Vector3 center = transform.position;
+
+        Vector3 size = new Vector3(
+            stats.attackRangeX * 2f,
+            stats.attackRangeY * 2f,
+            1f
+        );
+
+        Gizmos.DrawWireCube(center, size);
     }
 }

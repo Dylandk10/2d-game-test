@@ -3,6 +3,11 @@ using UnityEngine;
 
 public class PlayerAnimation : MonoBehaviour
 {
+
+    [Header("Stats")]
+    public PlayerStats stats;
+
+
     private static readonly int AnimStateHash = Animator.StringToHash("AnimState");
 
     //members
@@ -10,11 +15,13 @@ public class PlayerAnimation : MonoBehaviour
 
     private PlayerMovement movement;
     private Animator animator;
+    private Rigidbody2D rb;
 
-    void Start() 
+    void Awake() 
     {
-        movement = Player.Instance.GetPlayerMovement();
-        animator = Player.Instance.GetAnimator();
+        movement = GetComponent<PlayerMovement>();
+        animator = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody2D>();
     }
 
 
@@ -31,7 +38,7 @@ public class PlayerAnimation : MonoBehaviour
 
         animator.SetBool("IsGrounded", movement.IsGrounded);
 
-        animator.SetFloat("AirSpeedY", movement.Velocity.y);
+        animator.SetFloat("AirSpeedY", rb.linearVelocity.y);
 
         //handle flip
         if (movement.MoveInput > 0)

@@ -10,6 +10,7 @@ public class EnemyStats : ScriptableObject
     public float sightRangeX = 7f;
     public float sightRangeY = 2f;
     public float attackRangeX = 1.4f;
+    public float attackRangeY = 1.3f;
 
     [Header("Attack")]
     public float attackDelay = 0.4f;

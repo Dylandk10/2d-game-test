@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,13 +14,16 @@ public class PlayerMovement : MonoBehaviour
         Hurt
     }
 
+    [Header("Stats")]
+    public PlayerStats playerStats;
+
     public PlayerState currentState;
 
     [Header("Movement")]
-    public float moveSpeed = 5f;
+    public float moveSpeed => playerStats.moveSpeed;
 
     [Header("Jump")]
-    public float jumpForce = 12f;
+    public float jumpForce => playerStats.jumpForce;
     private bool jumpRequested = false;
 
     [Header("Ground Check")]
@@ -33,13 +35,14 @@ public class PlayerMovement : MonoBehaviour
     private bool wasGrounded;
 
     [Header("Jump Settings")]
-    public int maxJumps = 2;
+    public int maxJumps => playerStats.maxJumps;
     private int jumpCount;
 
     [Header("Dash")]
-    public float dashDistance = 6f;
-    public float dashSpeed = 10f;
-    public float dashCooldown = 15f;
+    public float dashDistance => playerStats.dashDistance; 
+    public float dashSpeed => playerStats.dashSpeed; 
+    public float dashCooldown => playerStats.dashCooldown; 
+
 
     private float lastDashTime;
     private bool dashRequested;
@@ -51,11 +54,19 @@ public class PlayerMovement : MonoBehaviour
     private bool attackRequested = false;
 
     public float MoveInput;
-    public Vector2 Velocity => Player.Instance.GetRigidbody2D().linearVelocity;
+    private Rigidbody2D rb;
+    private PlayerAnimation playerAnimationScript;
 
     void Awake()
     {
         currentState = PlayerState.Idle;
+        rb = GetComponent<Rigidbody2D>();
+        playerAnimationScript = GetComponent<PlayerAnimation>();
+    }
+
+    void Start()
+    {
+        lastDashTime = Time.time;
     }
 
     void Update()
@@ -63,6 +74,7 @@ public class PlayerMovement : MonoBehaviour
         GetInput();
         CheckGrounded();
         StateMachine();
+        Debug.Log(currentState);
     }
 
     void FixedUpdate()
@@ -190,12 +202,12 @@ public class PlayerMovement : MonoBehaviour
         if (jumpRequested && jumpCount < maxJumps)
         {
             // Reset vertical velocity for consistent jump height
-            Player.Instance.GetRigidbody2D().linearVelocity = new Vector2(Player.Instance.GetRigidbody2D().linearVelocity.x, 0f);
-            Player.Instance.GetRigidbody2D().linearVelocity = new Vector2(Player.Instance.GetRigidbody2D().linearVelocity.x, jumpForce);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             if(jumpCount < 1)
-                Player.Instance.GetPlayerAnimationScript().UpdateJump();
+                playerAnimationScript.UpdateJump();
             else
-                Player.Instance.GetPlayerAnimationScript().UpdateDash();
+                playerAnimationScript.UpdateDash();
             jumpCount++;
         }
         jumpRequested = false;
@@ -220,9 +232,9 @@ public class PlayerMovement : MonoBehaviour
         if (currentState == PlayerState.Dash)
             return;
 
-        Player.Instance.GetRigidbody2D().linearVelocity = new Vector2(
+        rb.linearVelocity = new Vector2(
             MoveInput * moveSpeed,
-            Player.Instance.GetRigidbody2D().linearVelocity.y
+            rb.linearVelocity.y
         );
     }
 
@@ -269,21 +281,20 @@ public class PlayerMovement : MonoBehaviour
 
         float dir = MoveInput != 0 ? MoveInput : facingDirection;
 
-        Player.Instance.GetPlayerAnimationScript().UpdateDash();
+        playerAnimationScript.UpdateDash();
         StartCoroutine(DashRoutine(dir));
     }
 
     IEnumerator DashRoutine(float direction)
     {
-        float originalGravity = Player.Instance.GetRigidbody2D().gravityScale;
-        Player.Instance.GetRigidbody2D().gravityScale = 0f;
+        float originalGravity = rb.gravityScale;
+        rb.gravityScale = 0f;
 
-        Player.Instance.GetRigidbody2D().linearVelocity =
-            new Vector2(direction * dashSpeed, 0f);
+        rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
 
         yield return new WaitForSeconds(dashDistance / dashSpeed);
 
-        Player.Instance.GetRigidbody2D().gravityScale = originalGravity;
+        rb.gravityScale = originalGravity;
 
         currentState = PlayerState.Move;
     }
@@ -302,7 +313,7 @@ public class PlayerMovement : MonoBehaviour
         string[] attacks = { "Attack1", "Attack2", "Attack3" };
         string selected = attacks[Random.Range(0, attacks.Length)];
 
-        Player.Instance.GetPlayerAnimationScript().UpdateAttack(selected);
+        playerAnimationScript.UpdateAttack(selected);
     }
 
     public void EndAttack()

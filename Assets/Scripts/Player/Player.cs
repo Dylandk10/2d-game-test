@@ -1,17 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     public static Player Instance { get; private set; }
 
-    //main components for subscripts
+    [Header("Stats")]
+    public PlayerStats playerStats;
+
+    //main components
     private Rigidbody2D rb;
     private PlayerAnimation playerAnimatorScript;
     private PlayerMovement playerMovement;
-    private Animator animator;
     private CapsuleCollider2D capsuleCollider;
     private SpriteRenderer spriteRenderer;
 
@@ -23,12 +26,11 @@ public class Player : MonoBehaviour
 
 
     //privates
-    private int lives = 6;
-    private readonly int maxLives = 6;
-    private int baseDamage = 50;
+    private int currentLives;
+    private int baseDamage => playerStats.baseDamage;
     private int damageBoost = 0;
     private bool isInvincible = false;
-    [SerializeField] private float invincibleDuration = 1.0f;
+    private float invincibleDuration => playerStats.invincibleDuration;
 
 
 
@@ -52,29 +54,24 @@ public class Player : MonoBehaviour
         playerMovement = GetComponent<PlayerMovement>();
         capsuleCollider = GetComponent<CapsuleCollider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        animator = GetComponent<Animator>();
-    }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        
+        currentLives = playerStats.maxLives;
     }
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     public void TakeDamage()
     {
         if (isInvincible) return; // if already hit
         playerMovement.currentState = PlayerMovement.PlayerState.Hurt;
-        lives--;
+        currentLives--;
 
-        if (lives <= 0)
+        if (currentLives <= 0)
         {
             StopAllCoroutines();
-            lives = 0;
+            currentLives = 0;
             Die();
         }
         playerMovement.EndAttack();
@@ -168,30 +165,12 @@ public class Player : MonoBehaviour
     }
     public int GetLives()
     {
-        return lives;
-    }
-    public int GetMaxLives() {
-        return maxLives;
+        return currentLives;
     }
 
-    public Rigidbody2D GetRigidbody2D()
+    public int GetMaxLives()
     {
-        return rb;
-    }
-
-    public PlayerAnimation GetPlayerAnimationScript()
-    {
-        return playerAnimatorScript;
-    }
-
-    public PlayerMovement GetPlayerMovement()
-    {
-        return playerMovement;
-    }
-
-    public Animator GetAnimator()
-    {
-        return animator;
+        return playerStats.maxLives;
     }
 
     // debug
