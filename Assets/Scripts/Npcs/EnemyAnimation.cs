@@ -1,12 +1,12 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using static Enemy;
 
 public class EnemyAnimation : MonoBehaviour
 {
     private static readonly int AnimStateHash = Animator.StringToHash("AnimState");
     private Animator animator;
     private Enemy enemyScript;
-    private bool isDead = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -32,10 +32,23 @@ public class EnemyAnimation : MonoBehaviour
         animator.SetTrigger("Attack");
     }
 
-    public void Death(bool didDie)
+    //mid animation check hit
+    public void OnAttackHit()
     {
-        isDead = didDie;
-        animator.SetTrigger("Hurt");
+        if (enemyScript.CheckPlayerInAttackRange())
+            CombatManager.Instance.TryHitPlayer();
+    }
+
+    //reset on last frame animation attack
+    public void OnAttackFinished()
+    {
+        enemyScript.SetIsAttacking(false);
+        enemyScript.SetLastAttackTime(Time.time);
+    }
+
+    public void Death()
+    {
+        animator.SetTrigger("Death");
     }
 
     public void UpdateHurt()
@@ -43,9 +56,20 @@ public class EnemyAnimation : MonoBehaviour
         animator.SetTrigger("Hurt");
     }
 
+    public void ForceHurt()
+    {
+        animator.ResetTrigger("Attack");      // cancel attack trigger
+        animator.Play("Hurt", 0, 0f);         // HARD override current animation
+    }
+
     public void OnLastFrameHurt()
     {
-        if(isDead)
-            animator.SetTrigger("Death");
+        enemyScript.SetIsHurt(false);
+        if (enemyScript.GetPendingDeath())
+        {
+            enemyScript.Die();
+            return;
+        }
+        enemyScript.SetCurrentState(EnemyState.Idle);
     }
 }

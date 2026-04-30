@@ -8,7 +8,8 @@ public class Enemy : MonoBehaviour
         Idle,
         Chase,
         Attack,
-        Dead
+        Dead,
+        Hurt
     }
 
     [Header("Stats")]
@@ -44,6 +45,9 @@ public class Enemy : MonoBehaviour
 
     public int AnimState = 0;
 
+    private bool isHurt = false;
+    private bool pendingDeath = false;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -62,7 +66,7 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        if (currentState == EnemyState.Dead || player == null) return;
+        if (currentState == EnemyState.Dead || player == null || currentState == EnemyState.Hurt) return;
 
         float dx = Mathf.Abs(player.position.x - transform.position.x);
         float dy = Mathf.Abs(player.position.y - transform.position.y);
@@ -261,8 +265,6 @@ public class Enemy : MonoBehaviour
             groundLayer
         );
 
-        Debug.DrawRay(origin, Vector2.right * direction * stats.wallCheckDistance, Color.red);
-
         return hit.collider != null && hit.distance <= stats.wallCheckDistance;
     }
 
@@ -283,30 +285,15 @@ public class Enemy : MonoBehaviour
     // -------------------------
     // ATTACK
     // -------------------------
-
     void Attack()
     {
-        if (!isAttacking)
-            StartCoroutine(AttackRoutine());
-    }
+        if (isAttacking || isHurt) return;
 
-    IEnumerator AttackRoutine()
-    {
         isAttacking = true;
-
-        AnimState = 0;
         animScript.Attack();
-
-        yield return new WaitForSeconds(stats.attackDelay);
-
-        if (CheckPlayerInAttackRange())
-            CombatManager.Instance.TryHitPlayer();
-
-        lastAttackTime = Time.time;
-        isAttacking = false;
     }
 
-    bool CheckPlayerInAttackRange()
+    public bool CheckPlayerInAttackRange()
     {
         float dx = Mathf.Abs(player.position.x - transform.position.x);
         return dx <= stats.attackRangeX;
@@ -323,17 +310,57 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if (currentState == EnemyState.Dead) return;
+        if (currentState == EnemyState.Dead || isHurt) return;
 
         health -= damage;
 
         if (health <= 0)
-            Die();
-        else
-            animScript.UpdateHurt();
+        {
+            pendingDeath = true;
+        }
+
+        EnterHurt();
     }
 
-    private void Die()
+    void EnterHurt()
+    {
+        isHurt = true;
+        currentState = EnemyState.Hurt;
+
+        // Cancel attack immediately
+        isAttacking = false;
+
+        rb.linearVelocity = Vector2.zero;
+
+        animScript.ForceHurt();
+    }
+
+    public void SetCurrentState(EnemyState enemyState)
+    {
+        currentState = enemyState;
+    }
+
+    public void SetIsHurt(bool hurt)
+    {
+        isHurt = hurt;
+    }
+
+    public void SetIsAttacking(bool attacking)
+    {
+        isAttacking = attacking;
+    }
+
+    public void SetLastAttackTime(float lastAttack)
+    {
+        lastAttackTime = lastAttack;
+    }
+
+    public bool GetPendingDeath()
+    {
+        return pendingDeath;
+    }
+
+    public void Die()
     {
         if (isDead) return;
 
@@ -346,7 +373,7 @@ public class Enemy : MonoBehaviour
 
         GetComponent<Collider2D>().enabled = false;
 
-        animScript.Death(true);
+        animScript.Death();
 
         StartCoroutine(DestroyAfterDeath());
     }
