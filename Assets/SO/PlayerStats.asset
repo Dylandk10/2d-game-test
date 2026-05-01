@@ -19,5 +19,5 @@ MonoBehaviour:
   jumpForce: 12
   maxJumps: 2
   dashDistance: 4
-  dashSpeed: 17
-  dashCooldown: 1.5
+  dashSpeed: 20
+  dashCooldown: 1

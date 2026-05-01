@@ -7,6 +7,8 @@ public class HeathUiManger : MonoBehaviour
     [SerializeField] public Image[] healthImages;
     [SerializeField] public Sprite Heart;
     [SerializeField] public Sprite BlackHeart;
+    public Image dashImageBorder;
+    public Image dashImageBackground;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -17,6 +19,7 @@ public class HeathUiManger : MonoBehaviour
     void FixedUpdate()
     {
         CheckHealth();
+        dashFill();
     }
 
     private void CheckHealth()
@@ -47,5 +50,22 @@ public class HeathUiManger : MonoBehaviour
                 healthImages[i].enabled = true;
             }
         }
+    }
+
+    void dashFill()
+    {
+        float fill = Player.Instance.GetPlayerMovement().GetDashCooldownNormalized();
+        dashImageBorder.fillAmount = fill;
+
+        if (Player.Instance.GetPlayerMovement().IsDashReady())
+        {
+            dashImageBorder.color = Color.white;
+            dashImageBackground.color = Color.white;
+        }
+        else
+        { 
+            dashImageBackground.color = Color.gray;
+        }
+        
     }
 }

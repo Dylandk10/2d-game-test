@@ -198,7 +198,9 @@ MonoBehaviour:
     m_Bits: 64
   IsGrounded: 0
   MoveInput: 0
-  Velocity: {x: 0, y: 0}
+  ghostPool: {fileID: -8306550133543436073, guid: 35aa2dd938c6e814a9dda67c63acfc32, type: 3}
+  ghostDistanceStep: 0.2
+  ghostColor: {r: 1, g: 1, b: 1, a: 0.7}
 --- !u!114 &2750108562690512980
 MonoBehaviour:
   m_ObjectHideFlags: 0

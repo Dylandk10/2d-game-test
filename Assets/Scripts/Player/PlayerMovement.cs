@@ -57,6 +57,11 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D rb;
     private PlayerAnimation playerAnimationScript;
 
+    [Header("Ghost Trail")]
+    public GhostPool ghostPool;
+    public float ghostDistanceStep = 0.05f; // lower = more ghosts
+    public Color ghostColor = new Color(1f, 1f, 1f, 0.5f);
+
     void Awake()
     {
         currentState = PlayerState.Idle;
@@ -66,7 +71,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
-        lastDashTime = Time.time;
+        lastDashTime = -dashCooldown;
     }
 
     void Update()
@@ -74,7 +79,6 @@ public class PlayerMovement : MonoBehaviour
         GetInput();
         CheckGrounded();
         StateMachine();
-        Debug.Log(currentState);
     }
 
     void FixedUpdate()
@@ -290,13 +294,67 @@ public class PlayerMovement : MonoBehaviour
         float originalGravity = rb.gravityScale;
         rb.gravityScale = 0f;
 
+        float maxDistance = dashDistance;
+
+        RaycastHit2D hit = Physics2D.Raycast(rb.position, Vector2.right * direction, dashDistance, groundLayer);
+
+        if (hit)
+        {
+            maxDistance = hit.distance;
+        }
+
+        float dashTime = maxDistance / dashSpeed;
+        StartCoroutine(SpawnGhostsDuringDash());
+
         rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
 
-        yield return new WaitForSeconds(dashDistance / dashSpeed);
+        yield return new WaitForSeconds(dashTime);
+
+        rb.linearVelocity = Vector2.zero;
 
         rb.gravityScale = originalGravity;
-
         currentState = PlayerState.Move;
+    }
+
+
+    /// <Dashghost>
+    /// Used for spawning a lingering ghost behind on player dash need to turn into pool
+    /// </Dashghost>
+    /// 
+    IEnumerator SpawnGhostsDuringDash()
+    {
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+
+        Vector3 lastPosition = transform.position;
+
+        while (currentState == PlayerState.Dash)
+        {
+            float distanceMoved = Vector3.Distance(transform.position, lastPosition);
+
+            if (distanceMoved >= ghostDistanceStep)
+            {
+                SpawnGhost(sr);
+                lastPosition = transform.position;
+            }
+
+            yield return null;
+        }
+    }
+
+    void SpawnGhost(SpriteRenderer playerSR)
+    {
+        Ghost ghost = ghostPool.GetGhost();
+
+        ghost.transform.position = transform.position;
+
+        ghost.Init(
+            playerSR.sprite,
+            playerSR.flipX,
+            ghostColor,
+            playerSR.sortingOrder - 1,
+            transform.localScale,
+            ghostPool
+        );
     }
 
     // ======================================================
@@ -340,6 +398,19 @@ public class PlayerMovement : MonoBehaviour
     public void SetAttackRequest(bool attack)
     {
         attackRequested = attack;
+    }
+
+
+    // for ui handinign
+    public float GetDashCooldownNormalized()
+    {
+        float t = (Time.time - lastDashTime) / dashCooldown;
+        return Mathf.Clamp01(t);
+    }
+
+    public bool IsDashReady()
+    {
+        return Time.time >= lastDashTime + dashCooldown;
     }
 
     // ======================================================

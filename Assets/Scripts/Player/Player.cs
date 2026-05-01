@@ -173,6 +173,9 @@ public class Player : MonoBehaviour
         return playerStats.maxLives;
     }
 
+    public PlayerMovement GetPlayerMovement()
+    { return playerMovement; }
+
     // debug
     void OnDrawGizmosSelected()
     {
