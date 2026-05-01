@@ -244,6 +244,9 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 256
   rb: {fileID: 856897112627382557}
   AnimState: 0
 --- !u!114 &6089171592293388449

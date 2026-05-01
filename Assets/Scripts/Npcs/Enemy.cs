@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using Unity.VisualScripting;
 
 public class Enemy : MonoBehaviour
 {
@@ -22,6 +23,7 @@ public class Enemy : MonoBehaviour
     public Transform groundCheck;
     public Transform wallCheck;
     public LayerMask groundLayer;
+    public LayerMask enemyLayer;
 
     private Vector2 startPosition;
     private float stateTimer;
@@ -47,6 +49,8 @@ public class Enemy : MonoBehaviour
 
     private bool isHurt = false;
     private bool pendingDeath = false;
+    private float blockedDirection = 0f;
+
 
     void Awake()
     {
@@ -105,6 +109,22 @@ public class Enemy : MonoBehaviour
         currentMoveDirection = 0f;
     }
 
+    public void Initialize(Transform playerTransform)
+    {
+        player = playerTransform;
+
+        // Reset important gameplay state
+        health = stats.maxHealth;
+        isDead = false;
+        isHurt = false;
+        isAttacking = false;
+
+        currentState = EnemyState.Idle;
+
+        rb.bodyType = RigidbodyType2D.Dynamic;
+        GetComponent<Collider2D>().enabled = true;
+    }
+
     // -------------------------
     // STATES
     // -------------------------
@@ -139,28 +159,7 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        float dir = patrolDirection;
-
-        bool canForward = CanMove(dir);
-        bool canBackward = CanMove(-dir);
-
-        if (!canForward && !canBackward)
-        {
-            AnimState = 0;
-            stateTimer = stats.idleTime;
-            isPatrolling = false;
-            currentState = EnemyState.Idle;
-            return;
-        }
-
-        if (canForward)
-            patrolDirection = dir;
-        else if (canBackward)
-            patrolDirection = -dir;
-
-        AnimState = 2;
-        Flip(patrolDirection);
-        Move(patrolDirection, stats.patrolSpeed);
+        HandleMovement(ref patrolDirection, stats.patrolSpeed, false);
 
         stateTimer -= Time.deltaTime;
 
@@ -175,19 +174,7 @@ public class Enemy : MonoBehaviour
     {
         float direction = player.position.x >= transform.position.x ? 1f : -1f;
 
-        if (CanMove(direction))
-            AnimState = 2;
-        else
-            AnimState = 0;
-
-        if (!CanMove(direction))
-        {
-            Flip(direction);
-            return;
-        }
-
-        Flip(direction);
-        Move(direction, stats.moveSpeed);
+        HandleMovement(ref direction, stats.moveSpeed, true);
 
         if (!inSight)
         {
@@ -197,6 +184,47 @@ public class Enemy : MonoBehaviour
 
         if (inAttackRange)
             currentState = EnemyState.Attack;
+    }
+
+    void HandleMovement(ref float direction, float baseSpeed, bool useForcedDirection)
+    {
+        if (blockedDirection != 0f)
+        {
+            direction = blockedDirection;
+        }
+        bool blockedForward = IsWallAhead(direction) || IsEnemyTooClose(direction);
+        bool blockedBackward = IsWallAhead(-direction) || IsEnemyTooClose(-direction);
+
+        // Fully stuck
+        if (blockedForward && blockedBackward)
+        {
+            blockedDirection = -direction;
+            Move(0, 0);
+            AnimState = 0;
+            return;
+        }
+
+
+
+        float speed = baseSpeed;
+
+        if (IsEnemyAhead(direction))
+            speed *= 0.4f;
+
+        if (IsEnemyTooClose(direction))
+            speed = 0f;
+
+        if (IsWallAhead(direction) || !IsGroundAhead(direction))
+            speed = 0f;
+
+        AnimState = speed > 0 ? 2 : 0;
+
+        if (speed > 0.01f)
+            Flip(direction);
+
+        Move(direction, speed);
+        blockedDirection = 0f;
+        return;
     }
 
     void HandleAttack(bool inSight, bool inAttackRange)
@@ -240,7 +268,6 @@ public class Enemy : MonoBehaviour
     void Flip(float direction)
     {
         if (direction == 0) return;
-
         facingDirection = (int)direction;
         transform.localScale = new Vector3(facingDirection, 1f, 1f);
     }
@@ -251,7 +278,7 @@ public class Enemy : MonoBehaviour
 
     bool CanMove(float direction)
     {
-        return !IsWallAhead(direction) && IsGroundAhead(direction);
+        return !IsWallAhead(direction) && IsGroundAhead(direction) && !IsEnemyAhead(direction);
     }
 
     bool IsWallAhead(float direction)
@@ -280,6 +307,34 @@ public class Enemy : MonoBehaviour
         );
 
         return hit.collider != null;
+    }
+
+    bool IsEnemyAhead(float direction)
+    {
+        Vector2 origin = (Vector2)wallCheck.position + Vector2.right * direction * 0.2f;
+
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            Vector2.right * direction,
+            0.8f, // longer = awareness
+            enemyLayer
+        );
+
+        return hit.collider != null && hit.collider.gameObject != gameObject;
+    }
+
+    bool IsEnemyTooClose(float direction)
+    {
+        Vector2 origin = (Vector2)wallCheck.position + Vector2.right * direction * 0.2f;
+
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            Vector2.right * direction,
+            0.3f, // SHORT distance = "too close"
+            enemyLayer
+        );
+
+        return hit.collider != null && hit.collider.gameObject != gameObject;
     }
 
     // -------------------------
@@ -382,25 +437,65 @@ public class Enemy : MonoBehaviour
     IEnumerator DestroyAfterDeath()
     {
         yield return new WaitForSeconds(stats.deathDestroyDelay);
-        Destroy(gameObject);
+        gameObject.SetActive(false);
+    }
+
+    void OnEnable()
+    {
+        // Fallback in case Initialize wasn't called
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
     }
 
     //debug
-
     void OnDrawGizmosSelected()
     {
         if (stats == null) return;
 
+        // 🔴 Attack range
         Gizmos.color = Color.red;
 
-        Vector3 center = transform.position;
-
-        Vector3 size = new Vector3(
+        Vector3 attackSize = new Vector3(
             stats.attackRangeX * 2f,
             stats.attackRangeY * 2f,
             1f
         );
 
-        Gizmos.DrawWireCube(center, size);
+        Gizmos.DrawWireCube(transform.position, attackSize);
+
+        // 🟡 Sight range
+        Gizmos.color = Color.yellow;
+
+        Vector3 sightSize = new Vector3(
+            stats.sightRangeX * 2f,
+            stats.sightRangeY * 2f,
+            1f
+        );
+
+        Gizmos.DrawWireCube(transform.position, sightSize);
+
+        // 🟦 Wall check
+        if (wallCheck != null)
+        {
+            Gizmos.color = Color.blue;
+
+            Gizmos.DrawLine(
+                wallCheck.position,
+                wallCheck.position + Vector3.right * transform.localScale.x * stats.wallCheckDistance
+            );
+        }
+
+        // 🟩 Ground check
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.green;
+
+            Vector3 origin = groundCheck.position + Vector3.right * transform.localScale.x * 0.05f;
+
+            Gizmos.DrawLine(
+                origin,
+                origin + Vector3.down * stats.groundCheckDistance
+            );
+        }
     }
 }
