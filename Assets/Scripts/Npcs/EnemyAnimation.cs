@@ -36,7 +36,7 @@ public class EnemyAnimation : MonoBehaviour
     public void OnAttackHit()
     {
         if (enemyScript.CheckPlayerInAttackRange())
-            CombatManager.Instance.TryHitPlayer();
+            CombatManager.Instance.TryHitPlayer(transform.position);
     }
 
     //reset on last frame animation attack

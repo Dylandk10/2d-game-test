@@ -62,6 +62,12 @@ public class PlayerMovement : MonoBehaviour
     public float ghostDistanceStep = 0.05f; // lower = more ghosts
     public Color ghostColor = new Color(1f, 1f, 1f, 0.5f);
 
+    [SerializeField] private float knockbackForce = 125f;
+    [SerializeField] private float knockbackUpForce = 75f;
+    [SerializeField] private float knockbackDuration = .6f;
+
+    private bool isKnockedBack = false;
+
     void Awake()
     {
         currentState = PlayerState.Idle;
@@ -97,6 +103,8 @@ public class PlayerMovement : MonoBehaviour
         {
             return;
         }
+
+        if (isKnockedBack) return;
 
         // don't block attack
         if (Mouse.current.leftButton.wasPressedThisFrame)
@@ -233,7 +241,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ApplyMovement()
     {
-        if (currentState == PlayerState.Dash)
+        if (currentState == PlayerState.Dash || isKnockedBack)
             return;
 
         rb.linearVelocity = new Vector2(
@@ -411,6 +419,40 @@ public class PlayerMovement : MonoBehaviour
     public bool IsDashReady()
     {
         return Time.time >= lastDashTime + dashCooldown;
+    }
+
+    public void ApplyKnockback(Vector2 sourcePosition)
+    {
+        if (isKnockedBack) return;
+
+        StartCoroutine(KnockbackRoutine(sourcePosition));
+    }
+
+    IEnumerator KnockbackRoutine(Vector2 sourcePosition)
+    {
+        isKnockedBack = true;
+        currentState = PlayerState.Hurt;
+
+        float dir = transform.position.x < sourcePosition.x ? -1f : 1f;
+
+        // 🔥 INSTANT snap velocity (this is the magic)
+        rb.linearVelocity = new Vector2(dir * knockbackForce, knockbackUpForce);
+
+        float timer = 0f;
+
+        while (timer < 0.2f)
+        {
+            timer += Time.deltaTime;
+
+            // 🔥 maintain horizontal force (prevents drag slowdown)
+            rb.linearVelocity = new Vector2(dir * knockbackForce, rb.linearVelocity.y);
+
+            yield return null;
+        }
+
+        isKnockedBack = false;
+
+        currentState = IsGrounded ? PlayerState.Idle : PlayerState.Jump;
     }
 
     // ======================================================

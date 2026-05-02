@@ -24,14 +24,14 @@ public class CombatManager : MonoBehaviour
     }
 
     // Called by hitbox
-    public void TryHitPlayer()
+    public void TryHitPlayer(Vector2 enemyPos)
     {
         if (hitRegisteredThisSwing)
             return; // prevents multi-hit per swing
 
         hitRegisteredThisSwing = true;
 
-        Player.Instance.TakeDamage();
+        Player.Instance.TakeDamage(enemyPos);
         hitRegisteredThisSwing = false;
     }
 

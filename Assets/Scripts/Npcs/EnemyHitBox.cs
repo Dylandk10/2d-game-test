@@ -1,14 +1,25 @@
 using UnityEngine;
-using static UnityEngine.Rendering.DebugUI;
 
-public class EnemyHitbox : MonoBehaviour
+public class EnemyDamage : MonoBehaviour
 {
-    //void OnTriggerEnter2D(Collider2D other)
+
+    //private Enemy enemy;
+
+    //private void Awake()
     //{
-    //    if (other.CompareTag("Player"))
+    //    enemy = GetComponentInParent<Enemy>();
+    //}
+    //private void OnTriggerStay2D(Collider2D other)
+    //{
+    //    if (!other.CompareTag("Player")) return;
+    //    if (enemy.GetPendingDeath()) return;
+    //    PlayerMovement player = Player.Instance.GetPlayerMovement();
+
+    //    if (player != null)
     //    {
-    //        Debug.Log("Player hit!");
-    //        Debug.Log(Time.time);
+    //        player.ApplyKnockback(transform.position);
     //    }
+
+    //    Player.Instance.TakeDamage();
     //}
 }

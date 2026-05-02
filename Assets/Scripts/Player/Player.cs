@@ -18,7 +18,7 @@ public class Player : MonoBehaviour
 
     // for attacks
     [SerializeField] public Transform attackPoint;
-    [SerializeField] private Vector2 attackSize = new Vector2(1.5f, 1f);
+    [SerializeField] private Vector2 attackSize = new Vector2(1.8f, 1f);
     [SerializeField] private LayerMask enemyLayer;
     private HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
@@ -60,7 +60,7 @@ public class Player : MonoBehaviour
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
 
-    public void TakeDamage()
+    public void TakeDamage(Vector2 enemyPos)
     {
         if (isInvincible) return; // if already hit
         playerMovement.currentState = PlayerMovement.PlayerState.Hurt;
@@ -76,18 +76,20 @@ public class Player : MonoBehaviour
 
         //keep camera effects off for now. Audio queues are going to be better
         // CameraEffects.Instance.HitZoom();
-        StartCoroutine(HitStop(0.2f));
+        StartCoroutine(HitStop(0.2f, enemyPos));
         StartCoroutine(InvincibilityRoutine());
         playerAnimatorScript.UpdateHurt();
     }
 
-    IEnumerator HitStop(float duration)
+    IEnumerator HitStop(float duration, Vector2 enemyPos)
     {
         Time.timeScale = 0f;
 
         yield return new WaitForSecondsRealtime(duration);
-
         Time.timeScale = 1f;
+        yield return null;
+        yield return new WaitForSeconds(0.02f);
+        playerMovement.ApplyKnockback(enemyPos);
     }
 
     IEnumerator InvincibilityRoutine()

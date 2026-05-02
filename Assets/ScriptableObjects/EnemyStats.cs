@@ -13,7 +13,7 @@ public class EnemyStats : ScriptableObject
     public float attackRangeY = 1.3f;
 
     [Header("Attack")]
-    public float attackDelay = 0.4f;
+    public float attackDelay = 0.2f;
     public float attackCooldown = 1.5f;
 
     [Header("Death")]

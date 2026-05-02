@@ -415,6 +415,10 @@ public class Enemy : MonoBehaviour
     {
         return pendingDeath;
     }
+    public bool GetIsPendingDeath()
+    {
+        return pendingDeath;
+    }
 
     public void Die()
     {
