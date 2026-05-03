@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &9217595406352440126
+--- !u!1 &6840810347982191340
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,41 +8,46 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 4858359935103171561}
-  - component: {fileID: -8306550133543436073}
+  - component: {fileID: 3413684643670090836}
+  - component: {fileID: 8387188933155217311}
   m_Layer: 0
-  m_Name: GhostPool
+  m_Name: EnemyPoolManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4858359935103171561
+--- !u!4 &3413684643670090836
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9217595406352440126}
+  m_GameObject: {fileID: 6840810347982191340}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 42.77642, y: 959.6574, z: 0}
+  m_LocalPosition: {x: 37.58802, y: -1.18721, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-8306550133543436073
+--- !u!114 &8387188933155217311
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9217595406352440126}
+  m_GameObject: {fileID: 6840810347982191340}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cb426d65cbdfd44485760623d784d75, type: 3}
+  m_Script: {fileID: 11500000, guid: 101fdb28a30746545a3417de281b8537, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GhostPool
-  ghostPrefab: {fileID: 818511298598418286, guid: c1df669326a787140b8e8fb513a6ae54, type: 3}
-  initialSize: 20
+  m_EditorClassIdentifier: Assembly-CSharp::PoolManager
+  pools:
+  - key: Enemy
+    prefab: {fileID: 5862702755627508075, guid: 55ee0fd8876f6394da6ff48171f63fe6, type: 3}
+    size: 50
+  - key: Portal
+    prefab: {fileID: 1139953564197904928, guid: 2657fc4eaf98a194a9b1c6fd26b3da88, type: 3}
+    size: 6

@@ -90,4 +90,16 @@ public class PoolManager : MonoBehaviour
 
         return newObj;
     }
+
+    public void Return(string key, GameObject obj)
+    {
+        if (!poolDict.ContainsKey(key))
+        {
+            Debug.LogError($"Trying to return object to non-existing pool '{key}'");
+            return;
+        }
+
+        obj.SetActive(false);
+        obj.transform.SetParent(transform); // keep hierarchy clean
+    }
 }

@@ -41,12 +41,12 @@ public class PlayerMovement : MonoBehaviour
     [Header("Dash")]
     public float dashDistance => playerStats.dashDistance; 
     public float dashSpeed => playerStats.dashSpeed; 
-    public float dashCooldown => playerStats.dashCooldown; 
-
-
+    public float dashCooldown => playerStats.dashCooldown;
+    private float originalGravity = 2.5f;
     private float lastDashTime;
     private bool dashRequested;
     private int facingDirection = 1;
+    private Coroutine dashRoutine;
 
     [Header("Attack")]
     private bool canAttack = true;
@@ -57,13 +57,9 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D rb;
     private PlayerAnimation playerAnimationScript;
 
-    [Header("Ghost Trail")]
-    public GhostPool ghostPool;
-    public float ghostDistanceStep = 0.05f; // lower = more ghosts
-    public Color ghostColor = new Color(1f, 1f, 1f, 0.5f);
 
-    [SerializeField] private float knockbackForce = 125f;
-    [SerializeField] private float knockbackUpForce = 75f;
+    [SerializeField] private float knockbackForce = 7f;
+    [SerializeField] private float knockbackUpForce = 4f;
     [SerializeField] private float knockbackDuration = .6f;
 
     private bool isKnockedBack = false;
@@ -104,7 +100,14 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (isKnockedBack) return;
+        if (isKnockedBack || currentState == PlayerState.Dash)
+        {
+            // Still allow facing updates, but block actions
+            attackRequested = false;
+            jumpRequested = false;
+            dashRequested = false;
+            return;
+        }
 
         // don't block attack
         if (Mouse.current.leftButton.wasPressedThisFrame)
@@ -216,10 +219,13 @@ public class PlayerMovement : MonoBehaviour
             // Reset vertical velocity for consistent jump height
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            if(jumpCount < 1)
+            if (jumpCount < 1)
                 playerAnimationScript.UpdateJump();
             else
-                playerAnimationScript.UpdateDash();
+                playerAnimationScript.UpdateJump();
+            // playerAnimationScript.UpdateDash();
+            //put second jump anim here
+
             jumpCount++;
         }
         jumpRequested = false;
@@ -289,22 +295,24 @@ public class PlayerMovement : MonoBehaviour
         dashRequested = false;
         lastDashTime = Time.time;
 
-        currentState = PlayerState.Dash;
+        
+
 
         float dir = MoveInput != 0 ? MoveInput : facingDirection;
-
+        rb.gravityScale = 0f;
         playerAnimationScript.UpdateDash();
-        StartCoroutine(DashRoutine(dir));
+        //StartCoroutine(DashRoutine(dir));
     }
 
-    IEnumerator DashRoutine(float direction)
+    public void StartMoveDash()
     {
-        float originalGravity = rb.gravityScale;
-        rb.gravityScale = 0f;
+        currentState = PlayerState.Dash;
+        float dir = MoveInput != 0 ? MoveInput : facingDirection;
+        
 
         float maxDistance = dashDistance;
 
-        RaycastHit2D hit = Physics2D.Raycast(rb.position, Vector2.right * direction, dashDistance, groundLayer);
+        RaycastHit2D hit = Physics2D.Raycast(rb.position, Vector2.right * dir, dashDistance, groundLayer);
 
         if (hit)
         {
@@ -312,58 +320,39 @@ public class PlayerMovement : MonoBehaviour
         }
 
         float dashTime = maxDistance / dashSpeed;
-        StartCoroutine(SpawnGhostsDuringDash());
 
-        rb.linearVelocity = new Vector2(direction * dashSpeed, 0f);
+        rb.linearVelocity = new Vector2(dir * dashSpeed, 0f);
 
-        yield return new WaitForSeconds(dashTime);
+        // 🔥 SAFETY TIMER
+        if (dashRoutine != null)
+            StopCoroutine(dashRoutine);
 
-        rb.linearVelocity = Vector2.zero;
-
-        rb.gravityScale = originalGravity;
-        currentState = PlayerState.Move;
+        dashRoutine = StartCoroutine(ForceEndDash(dashTime));
     }
 
-
-    /// <Dashghost>
-    /// Used for spawning a lingering ghost behind on player dash need to turn into pool
-    /// </Dashghost>
-    /// 
-    IEnumerator SpawnGhostsDuringDash()
+    IEnumerator ForceEndDash(float time)
     {
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        yield return new WaitForSeconds(time);
 
-        Vector3 lastPosition = transform.position;
-
-        while (currentState == PlayerState.Dash)
+        // If animation didn't end it, force stop
+        if (currentState == PlayerState.Dash)
         {
-            float distanceMoved = Vector3.Distance(transform.position, lastPosition);
-
-            if (distanceMoved >= ghostDistanceStep)
-            {
-                SpawnGhost(sr);
-                lastPosition = transform.position;
-            }
-
-            yield return null;
+            EndDashMovement();
         }
     }
 
-    void SpawnGhost(SpriteRenderer playerSR)
+    public void EndDashMovement()
     {
-        Ghost ghost = ghostPool.GetGhost();
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = originalGravity;
 
-        ghost.transform.position = transform.position;
-
-        ghost.Init(
-            playerSR.sprite,
-            playerSR.flipX,
-            ghostColor,
-            playerSR.sortingOrder - 1,
-            transform.localScale,
-            ghostPool
-        );
+        currentState = Mathf.Abs(MoveInput) > 0.1f
+            ? PlayerState.Move
+            : PlayerState.Idle;
     }
+
+
+
 
     // ======================================================
     // ATTACK
@@ -379,7 +368,8 @@ public class PlayerMovement : MonoBehaviour
         string[] attacks = { "Attack1", "Attack2", "Attack3" };
         string selected = attacks[Random.Range(0, attacks.Length)];
 
-        playerAnimationScript.UpdateAttack(selected);
+        //hard code for player test
+        playerAnimationScript.UpdateAttack("Attack1");
     }
 
     public void EndAttack()

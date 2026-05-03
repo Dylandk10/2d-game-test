@@ -15,8 +15,8 @@ MonoBehaviour:
   moveSpeed: 2
   sightRangeX: 7
   sightRangeY: 2
-  attackRangeX: 2
-  attackRangeY: 1.4
+  attackRangeX: 1.2
+  attackRangeY: 1.2
   attackDelay: 0.2
   attackCooldown: 1.5
   deathDestroyDelay: 1.2

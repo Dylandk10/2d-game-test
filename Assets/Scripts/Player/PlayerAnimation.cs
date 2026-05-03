@@ -1,4 +1,5 @@
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 
 public class PlayerAnimation : MonoBehaviour
@@ -9,6 +10,8 @@ public class PlayerAnimation : MonoBehaviour
 
 
     private static readonly int AnimStateHash = Animator.StringToHash("AnimState");
+    [SerializeField] private string portalPoolKey = "Portal";
+    [SerializeField] private Vector3 portalOffset = new Vector3(0f, -0.5f, 0f);
 
     //members
     private int facingDirection = 1;
@@ -87,6 +90,20 @@ public class PlayerAnimation : MonoBehaviour
         DisableDamage();
     }
 
+    //for first swing in animation
+    public void DealDamageFirstHit()
+    {
+        Player.Instance.ClearHitEnemies();
+        Player.Instance.DealDamage();
+    }
+
+    //for second swing in animation
+    public void DealDamageSecondHit()
+    {
+        Player.Instance.ClearHitEnemies();
+        Player.Instance.DealDamage();
+    }
+
     public void EnableDamage()
     {
         movement.SetCanDealDamage(true);
@@ -116,6 +133,49 @@ public class PlayerAnimation : MonoBehaviour
         movement.currentState = movement.IsGrounded
             ? PlayerMovement.PlayerState.Idle
             : PlayerMovement.PlayerState.Jump;
+    }
+
+    public void MoveDash()
+    {
+        SpawnStartPortal();
+        movement.StartMoveDash(); 
+    }
+
+    public void EndDash()
+    {
+        movement.EndDashMovement();
+        SpawnEndPortal();
+    }
+
+    private void SpawnStartPortal()
+    {
+        Debug.Log("SpawnStartPortal CALLED");
+        GameObject obj = PoolManager.Instance.Get(portalPoolKey);
+        PlayerPortal portal = obj.GetComponent<PlayerPortal>();
+
+        bool facingRight = transform.localScale.x > 0;
+        Vector3 pos;
+        if (facingRight)
+            pos = transform.position + new Vector3(-1.2f, 0.2f, 0f);
+        else
+            pos = transform.position + new Vector3(1.2f, 0.2f, 0f);
+
+        portal.Activate(pos, facingRight);
+    }
+
+    private void SpawnEndPortal()
+    {
+        GameObject obj = PoolManager.Instance.Get(portalPoolKey);
+        PlayerPortal portal = obj.GetComponent<PlayerPortal>();
+
+        bool facingRight = transform.localScale.x > 0;
+        Vector3 pos;
+        if (facingRight)
+            pos = transform.position + new Vector3(-1.2f, 0.2f, 0f);
+        else
+            pos = transform.position + new Vector3(1.2f, 0.2f, 0f);
+
+        portal.Activate(pos, facingRight);
     }
 
 }
