@@ -173,7 +173,7 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleIdle()
     {
-        if (Mathf.Abs(MoveInput) > 0.1f)
+        if (Mathf.Abs(MoveInput) > 0.2f)
             currentState = PlayerState.Move;
 
         if (dashRequested)
@@ -207,7 +207,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (Mathf.Abs(MoveInput) < 0.1f)
+        if (Mathf.Abs(MoveInput) < 0.2f)
             currentState = PlayerState.Idle;
     }
 
@@ -237,8 +237,6 @@ public class PlayerMovement : MonoBehaviour
     }
     void HandleAttackState()
     {
-        jumpRequested = false;
-        dashRequested = false;
     }
 
     // ======================================================
@@ -346,9 +344,7 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         rb.gravityScale = originalGravity;
 
-        currentState = Mathf.Abs(MoveInput) > 0.1f
-            ? PlayerState.Move
-            : PlayerState.Idle;
+        currentState = PlayerState.Move;
     }
 
 

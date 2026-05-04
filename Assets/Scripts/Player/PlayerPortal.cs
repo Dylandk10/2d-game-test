@@ -16,7 +16,7 @@ public class PlayerPortal : MonoBehaviour
     public void Activate(Vector3 position, bool facingRight)
     {
         transform.SetParent(null);
-        Debug.Log("I am lord yaya");
+
         transform.position = position;
 
         transform.rotation = facingRight
@@ -43,7 +43,6 @@ public class PlayerPortal : MonoBehaviour
     // Animation Event at end
     public void ReturnToPool()
     {
-        Debug.Log("RETURNING PORTAL");
         if (!isActive) return;
 
         isActive = false;

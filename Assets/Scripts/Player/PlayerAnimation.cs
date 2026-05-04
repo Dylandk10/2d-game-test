@@ -87,7 +87,6 @@ public class PlayerAnimation : MonoBehaviour
     public void DealDamageHalfWayThroughAnimation()
     {
         Player.Instance.DealDamage();
-        DisableDamage();
     }
 
     //for first swing in animation
@@ -116,12 +115,6 @@ public class PlayerAnimation : MonoBehaviour
 
     public void EndAttack()
     {
-        if (movement.GetAttackRequest())
-        {
-            movement.SetAttackRequest(false);
-            movement.StartAttack(); // immediately chain next attack
-            return;
-        }
         movement.EndAttack();
     }
 
@@ -149,7 +142,6 @@ public class PlayerAnimation : MonoBehaviour
 
     private void SpawnStartPortal()
     {
-        Debug.Log("SpawnStartPortal CALLED");
         GameObject obj = PoolManager.Instance.Get(portalPoolKey);
         PlayerPortal portal = obj.GetComponent<PlayerPortal>();
 
