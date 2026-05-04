@@ -21,11 +21,17 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: -2468121676294051200, guid: 996b6dc48af447948aa7cab6df470516, type: 3}
-    - time: 0.033333335
+      value: {fileID: -9040765914099916023, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
+    - time: 0.083333336
+      value: {fileID: -5358785466305549878, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
+    - time: 0.16666667
+      value: {fileID: -7279917697749223229, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
+    - time: 0.2
       value: {fileID: -6123518129037926562, guid: a3cb43868700e69498f6f9e5257cb2f6, type: 3}
-    - time: 0.26666668
-      value: {fileID: -2468121676294051200, guid: 996b6dc48af447948aa7cab6df470516, type: 3}
+    - time: 0.43333334
+      value: {fileID: -2468121676294051200, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
+    - time: 0.48333332
+      value: {fileID: 1422351456207889881, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
     attribute: m_Sprite
     path: 
     classID: 212
@@ -48,15 +54,18 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     pptrCurveMapping:
-    - {fileID: -2468121676294051200, guid: 996b6dc48af447948aa7cab6df470516, type: 3}
+    - {fileID: -9040765914099916023, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
+    - {fileID: -5358785466305549878, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
+    - {fileID: -7279917697749223229, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
     - {fileID: -6123518129037926562, guid: a3cb43868700e69498f6f9e5257cb2f6, type: 3}
-    - {fileID: -2468121676294051200, guid: 996b6dc48af447948aa7cab6df470516, type: 3}
+    - {fileID: -2468121676294051200, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
+    - {fileID: 1422351456207889881, guid: 804348953ddbdf24d9944ce0de6b3e8b, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.28333336
+    m_StopTime: 0.5
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -76,14 +85,14 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.016666668
+  - time: 0.16666667
     functionName: MoveDash
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.23333333
+  - time: 0.43333334
     functionName: EndDash
     data: 
     objectReferenceParameter: {fileID: 0}

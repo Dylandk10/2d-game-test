@@ -151,7 +151,6 @@ public class Player : MonoBehaviour
                 enemy.TakeDamage(GetDamage());
             }
         }
-        Debug.Log("yaya");
     }
 
     public void ClearHitEnemies()

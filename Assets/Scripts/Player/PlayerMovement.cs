@@ -356,6 +356,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void StartAttack()
     {
+
+        if (canAttack == false) return;
         currentState = PlayerState.Attack;
         canAttack = false;
 
@@ -365,7 +367,7 @@ public class PlayerMovement : MonoBehaviour
         string selected = attacks[Random.Range(0, attacks.Length)];
 
         //hard code for player test
-        playerAnimationScript.UpdateAttack("Attack1");
+        playerAnimationScript.UpdateAttack(selected);
     }
 
     public void EndAttack()
