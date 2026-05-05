@@ -32,15 +32,15 @@ AnimationClip:
       value: {fileID: 710405504474814621, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
     - time: 0.2
       value: {fileID: 4744345350717088690, guid: 02493177464b4994f94fa6b4a9b31aeb, type: 3}
-    - time: 0.36666667
+    - time: 0.31666666
       value: {fileID: -1658806294426973400, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
-    - time: 0.43333334
+    - time: 0.38333333
       value: {fileID: -985871239997422432, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
-    - time: 0.5
+    - time: 0.45
       value: {fileID: 1242959238900065772, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
-    - time: 0.56666666
+    - time: 0.51666665
       value: {fileID: 8067879071682038392, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
-    - time: 0.6666667
+    - time: 0.6166667
       value: {fileID: 1206424306, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
     attribute: m_Sprite
     path: 
@@ -80,7 +80,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.71666664
+    m_StopTime: 0.6333333
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -107,21 +107,21 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.5
+  - time: 0.18333334
     functionName: DealDamageHalfWayThroughAnimation
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.65
+  - time: 0.53333336
     functionName: DisableDamage
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.71666664
+  - time: 0.6
     functionName: EndAttack
     data: 
     objectReferenceParameter: {fileID: 0}
