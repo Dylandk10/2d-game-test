@@ -28,12 +28,12 @@ public class Enemy : MonoBehaviour
     private Vector2 startPosition;
     private float stateTimer;
     private bool isPatrolling = false;
-    private float patrolDirection = -1f;
+    private float patrolDirection = 1f;
 
     private float currentMoveDirection = 0f;
     private float currentMoveSpeed = 0f;
 
-    private int facingDirection = 1;
+    private int facingDirection = -1;
     private EnemyState currentState;
 
     private bool isAttacking = false;

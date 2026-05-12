@@ -49,9 +49,12 @@ public class PlayerMovement : MonoBehaviour
     private Coroutine dashRoutine;
 
     [Header("Attack")]
+    private float attackBufferTime = 0.2f;
+    private float lastAttackInputTime;
+    private int comboIndex = 0;
+    private float comboResetTime = 0.5f;
     private bool canAttack = true;
-    private bool canDealDamage = true;
-    private bool attackRequested = false;
+    private float lastAttackEndTime;
 
     public float MoveInput;
     private Rigidbody2D rb;
@@ -60,7 +63,6 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private float knockbackForce = 7f;
     [SerializeField] private float knockbackUpForce = 4f;
-    [SerializeField] private float knockbackDuration = .6f;
 
     private bool isKnockedBack = false;
 
@@ -103,16 +105,15 @@ public class PlayerMovement : MonoBehaviour
         if (isKnockedBack || currentState == PlayerState.Dash)
         {
             // Still allow facing updates, but block actions
-            attackRequested = false;
             jumpRequested = false;
             dashRequested = false;
             return;
         }
 
-        // don't block attack
+        
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            attackRequested = true;
+            lastAttackInputTime = Time.time;
         }
         MoveInput = 0f;
 
@@ -173,6 +174,7 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleIdle()
     {
+        bool bufferedAttack = Time.time <= lastAttackInputTime + attackBufferTime;
         if (Mathf.Abs(MoveInput) > 0.2f)
             currentState = PlayerState.Move;
 
@@ -180,19 +182,22 @@ public class PlayerMovement : MonoBehaviour
             TryDash();
         if (jumpRequested)
             HandleJump();
-        if (attackRequested && canAttack)
+        if (bufferedAttack && canAttack)
         {
-            attackRequested = false;
+            lastAttackInputTime = -999f; // consume it
             StartAttack();
+            return;
         }
     }
 
     void HandleMove()
     {
-        if (attackRequested && canAttack)
+        bool bufferedAttack = Time.time <= lastAttackInputTime + attackBufferTime;
+        if (bufferedAttack && canAttack)
         {
-            attackRequested = false;
+            lastAttackInputTime = -999f; // consume it
             StartAttack();
+            return;
         }
 
         if (dashRequested)
@@ -232,11 +237,15 @@ public class PlayerMovement : MonoBehaviour
     }
     void HandleDashState() 
     {
-        attackRequested = false;
         jumpRequested = false;
     }
     void HandleAttackState()
     {
+        if (Time.time <= lastAttackInputTime + attackBufferTime && canAttack)
+        {
+            lastAttackInputTime = -999f;
+            StartAttack();
+        }
     }
 
     // ======================================================
@@ -353,20 +362,28 @@ public class PlayerMovement : MonoBehaviour
     // ======================================================
     // ATTACK
     // ======================================================
+    //
+    //General flow
 
     public void StartAttack()
     {
+        string[] attacks = { "Attack1", "Attack2", "Attack3" };
 
-        if (canAttack == false) return;
+        if (Time.time > lastAttackEndTime + comboResetTime)
+        {
+            comboIndex = 0;
+        }
+
+        string selected = attacks[comboIndex];
+        comboIndex = (comboIndex + 1) % attacks.Length;
+
+        //push attack slightly forward
+        rb.linearVelocity = new Vector2(facingDirection * 2f, rb.linearVelocity.y);
+
         currentState = PlayerState.Attack;
-        canAttack = false;
 
         Player.Instance.ClearHitEnemies();
 
-        string[] attacks = { "Attack1", "Attack2", "Attack3" };
-        string selected = attacks[Random.Range(0, attacks.Length)];
-
-        //hard code for player test
         playerAnimationScript.UpdateAttack(selected);
     }
 
@@ -374,26 +391,7 @@ public class PlayerMovement : MonoBehaviour
     {
         canAttack = true;
         currentState = PlayerState.Move;
-    }
-
-    public bool GetCanDealDamage()
-    {
-        return canDealDamage;
-    }
-
-    public void SetCanDealDamage(bool canDeal)
-    {
-        canDealDamage = canDeal;
-    }
-
-    public bool GetAttackRequest()
-    {
-        return attackRequested;
-    }
-
-    public void SetAttackRequest(bool attack)
-    {
-        attackRequested = attack;
+        lastAttackEndTime = Time.time;
     }
 
 

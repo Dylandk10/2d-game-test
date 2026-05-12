@@ -38,9 +38,9 @@ AnimationClip:
       value: {fileID: -985871239997422432, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
     - time: 0.45
       value: {fileID: 1242959238900065772, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
-    - time: 0.51666665
+    - time: 0.55
       value: {fileID: 8067879071682038392, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
-    - time: 0.6166667
+    - time: 0.6333333
       value: {fileID: 1206424306, guid: e8135315f2d0c2f4aaac2e1341c17d68, type: 3}
     attribute: m_Sprite
     path: 
@@ -80,7 +80,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.6333333
+    m_StopTime: 0.65
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -100,14 +100,7 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.016666668
-    functionName: EnableDamage
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 0.18333334
+  - time: 0.36666667
     functionName: DealDamageHalfWayThroughAnimation
     data: 
     objectReferenceParameter: {fileID: 0}
@@ -115,13 +108,6 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 0.53333336
-    functionName: DisableDamage
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 0.6
     functionName: EndAttack
     data: 
     objectReferenceParameter: {fileID: 0}

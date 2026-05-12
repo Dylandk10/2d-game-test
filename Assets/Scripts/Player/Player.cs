@@ -132,8 +132,6 @@ public class Player : MonoBehaviour
 
     public void DealDamage()
     {
-        if (!playerMovement.GetCanDealDamage()) return;
-
         Collider2D[] hits = Physics2D.OverlapBoxAll(
             attackPoint.position,
             attackSize,

@@ -102,26 +102,13 @@ public class PlayerAnimation : MonoBehaviour
         Player.Instance.ClearHitEnemies();
         Player.Instance.DealDamage();
     }
-
-    public void EnableDamage()
-    {
-        movement.SetCanDealDamage(true);
-    }
-
-    public void DisableDamage()
-    {
-        movement.SetCanDealDamage(false);
-    }
-
     public void EndAttack()
     {
         movement.EndAttack();
     }
 
     public void EndHurt()
-    {
-        movement.SetCanDealDamage(false);
-        movement.SetAttackRequest(false);   
+    { 
 
         movement.currentState = movement.IsGrounded
             ? PlayerMovement.PlayerState.Idle
