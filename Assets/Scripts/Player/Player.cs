@@ -116,6 +116,7 @@ public class Player : MonoBehaviour
         isInvincible = false;
     }
 
+    // refer to gamemanager for gamestate update
     private void Die()
     {
         capsuleCollider.enabled = false;
@@ -129,6 +130,8 @@ public class Player : MonoBehaviour
         // Play death animation
         playerAnimatorScript.PlayDeath();
     }
+
+    // redbox attack for basic swing
 
     public void DealDamage()
     {
